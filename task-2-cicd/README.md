@@ -2,6 +2,8 @@
 
 This folder contains the secure delivery pipeline and supply-chain configurations for the `ledger-api` service, ensuring that security is enforced by automation rather than human memory.
 
+![Architecture Diagram](./task2-architecture-diagram.png)
+
 ---
 
 ## What was built
