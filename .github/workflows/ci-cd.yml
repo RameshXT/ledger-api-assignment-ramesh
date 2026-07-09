@@ -26,8 +26,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Semgrep: hard-blocks on ERROR-severity findings (e.g. injection, RCE-class issues). 
+  # WARNING-level findings are reported but do not block the pipeline, since not every 
+  # style/best-practice suggestion warrants stopping deployment.
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: auto
+        working-directory: ./task-1-hardening/app
+
   build-and-push:
-    needs: secrets-scan
+    needs: [secrets-scan, sast-scan]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
