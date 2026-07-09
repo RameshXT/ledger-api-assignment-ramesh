@@ -22,10 +22,10 @@
       what only warns, and how a CVE with no available fix yet is handled
 
 ### 5. GitOps with ArgoCD
-- [ ] Create ArgoCD Application resource pointing at this repo
-- [ ] Demonstrate drift detection: manually kubectl edit a live resource, 
+- [x] Create ArgoCD Application resource pointing at this repo
+- [x] Demonstrate drift detection: manually kubectl edit a live resource, 
       show ArgoCD detects the drift
-- [ ] Demonstrate self-heal: show ArgoCD automatically reverts the manual change
+- [x] Demonstrate self-heal: show ArgoCD automatically reverts the manual change
 
 ## BONUS ITEMS
 - [ ] Upload scanner results as SARIF format so they appear in GitHub Security tab

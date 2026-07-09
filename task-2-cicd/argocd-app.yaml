@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ledger-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/RameshXT/ledger-api-assignment-ramesh.git
+    targetRevision: HEAD
+    path: task-1-hardening/deploy
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: payments
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
