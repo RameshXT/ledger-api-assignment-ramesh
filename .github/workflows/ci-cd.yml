@@ -1,0 +1,35 @@
+name: Secure CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push container image
+        run: |
+          # Retrieve the short SHA for image tagging to avoid using "latest" (which is blocked by Kyverno)
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE=ghcr.io/${{ github.repository_owner }}/ledger-api:$SHORT_SHA
+          
+          # Built directly from task-1-hardening/app/ to maintain a single source of truth 
+          # for the application source code and avoid duplication in task-2-cicd.
+          docker build -t "$IMAGE" ./task-1-hardening/app
+          docker push "$IMAGE"
