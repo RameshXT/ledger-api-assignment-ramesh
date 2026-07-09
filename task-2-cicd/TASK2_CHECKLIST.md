@@ -14,8 +14,8 @@
 - [x] Secrets scan — Gitleaks
 
 ### 3. Signing and provenance
-- [ ] Sign image with Cosign (keyless mode, using GitHub OIDC)
-- [ ] Generate SLSA-style provenance/attestation
+- [x] Sign image with Cosign (keyless mode, using GitHub OIDC)
+- [x] Generate SLSA-style provenance/attestation
 
 ### 4. Fail policy documentation
 - [x] For each gate above, explicitly state: what hard-blocks the pipeline, 

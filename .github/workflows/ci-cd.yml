@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
   # Gitleaks: hard-blocks the pipeline. Any detected secret stops 
@@ -74,6 +75,17 @@ jobs:
           docker build -t "$IMAGE" ./task-1-hardening/app
           docker push "$IMAGE"
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Sign container image
+        run: |
+          cosign sign --yes "${{ steps.build.outputs.image }}"
+
+      - name: Generate SLSA provenance attestation
+        run: |
+          cosign attest --yes --type slsaprovenance "${{ steps.build.outputs.image }}"
 
   # Trivy: hard-blocks on CRITICAL/HIGH severity CVEs in dependencies or the built image. 
   # MEDIUM/LOW findings are reported but do not block, since we prioritize fixing what's 
