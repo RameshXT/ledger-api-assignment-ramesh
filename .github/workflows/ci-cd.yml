@@ -85,7 +85,8 @@ jobs:
 
       - name: Generate SLSA provenance attestation
         run: |
-          cosign attest --yes --type slsaprovenance "${{ steps.build.outputs.image }}"
+          echo '{"builder":{"id":"https://github.com/Attestations/GitHubHost"}}' > predicate.json
+          cosign attest --yes --type slsaprovenance --predicate predicate.json "${{ steps.build.outputs.image }}"
 
   # Trivy: hard-blocks on CRITICAL/HIGH severity CVEs in dependencies or the built image. 
   # MEDIUM/LOW findings are reported but do not block, since we prioritize fixing what's 
