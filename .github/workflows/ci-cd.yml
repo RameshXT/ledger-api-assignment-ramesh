@@ -9,6 +9,7 @@ permissions:
   contents: read
   packages: write
   id-token: write
+  security-events: write
 
 jobs:
   # Gitleaks: hard-blocks the pipeline. Any detected secret stops 
@@ -32,18 +33,24 @@ jobs:
   # style/best-practice suggestion warrants stopping deployment.
   sast-scan:
     runs-on: ubuntu-latest
-    container:
-      image: semgrep/semgrep
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Semgrep
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: Run Semgrep and Generate SARIF
         run: |
-          # 1. Report all findings (including warnings) but do not block the build
-          semgrep scan --config auto task-1-hardening/app || true
-          
-          # 2. Hard block only if there are ERROR-severity findings
+          semgrep scan --config auto --sarif --output semgrep.sarif task-1-hardening/app || true
+
+      - name: Upload Semgrep SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
+      - name: Run Semgrep Blocker (Fail on ERROR)
+        run: |
           semgrep scan --config auto --severity ERROR --error task-1-hardening/app
 
   build-and-push:
@@ -100,7 +107,41 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run Trivy FS Scan (Dependencies)
+      - name: Run Trivy FS Scan (SARIF output)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'task-1-hardening/app'
+          scanners: 'vuln'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          ignore-unfixed: false
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy FS SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-fs'
+
+      - name: Run Trivy Image Scan (SARIF output)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ${{ needs.build-and-push.outputs.image }}
+          scanners: 'vuln'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+          ignore-unfixed: false
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Image SARIF to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+          category: 'trivy-image'
+
+      - name: Run Trivy FS Blocker (Table output)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
@@ -111,7 +152,7 @@ jobs:
           ignore-unfixed: false
           severity: 'CRITICAL,HIGH'
 
-      - name: Run Trivy Image Scan (Container Image)
+      - name: Run Trivy Image Blocker (Table output)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'image'

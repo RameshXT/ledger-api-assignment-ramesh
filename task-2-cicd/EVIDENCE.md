@@ -106,3 +106,22 @@ LAST SEEN   TYPE     REASON             OBJECT                   MESSAGE
 20s         Normal   ResourceUpdated    application/ledger-app   Updated health status: Healthy -> Progressing
 19s         Normal   ResourceUpdated    application/ledger-app   Updated health status: Progressing -> Healthy
 ```
+
+---
+
+## 7. Cosign Signature Verification Output (Bonus)
+
+We verified the keyless signature of the deployed image using `cosign verify`. The output confirms the signature's validity and ties it directly to our GitHub Actions workflow identity:
+
+```text
+$ wsl cosign verify --certificate-identity-regexp "https://github.com/RameshXT/ledger-api-assignment-ramesh/.*" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" ghcr.io/rameshxt/ledger-api:9ab80fc
+
+Verification for ghcr.io/rameshxt/ledger-api:9ab80fc --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The code-signing certificate was verified using trusted certificate authority certificates
+
+[{"critical":{"identity":{"docker-reference":"ghcr.io/rameshxt/ledger-api"},"image":{"docker-manifest-digest":"sha256:b7940030ca7910d637554aa17244e92faf9e6172773bc774c3ad4a8b086fc342"},"type":"cosign container image signature"},"optional":{"1.3.6.1.4.1.57264.1.1":"https://token.actions.githubusercontent.com","1.3.6.1.4.1.57264.1.2":"push","1.3.6.1.4.1.57264.1.3":"9ab80fcba5464079bcab46617d1b772939b1cbd0","1.3.6.1.4.1.57264.1.4":"Secure CI/CD Pipeline","1.3.6.1.4.1.57264.1.5":"RameshXT/ledger-api-assignment-ramesh","1.3.6.1.4.1.57264.1.6":"refs/heads/main"}}]
+```
+
