@@ -4,6 +4,14 @@ metadata:
   name: reporting
   namespace: payments
 ---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reporting-config
+  namespace: payments
+data:
+  REPORT_ENV: "production"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +30,58 @@ spec:
         app: reporting
     spec:
       serviceAccountName: reporting
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: client
           image: curlimages/curl:8.8.0
           command: ["sleep", "infinity"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          livenessProbe:
+            exec:
+              command:
+                - "true"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - "true"
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            - name: REPORT_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: reporting-config
+                  key: REPORT_ENV
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting
+  namespace: payments
+spec:
+  selector:
+    app: reporting
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
