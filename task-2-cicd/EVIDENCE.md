@@ -10,7 +10,7 @@ The full CI/CD pipeline runs to completion on every push. Below is the step conf
 
 ```text
 secrets-scan (gitleaks)  ---.
-                             \---> build-and-push (Docker, Cosign) ---> image-scan (Trivy)
+                             \---> build-and-push (Docker) ---> image-scan (Trivy) ---> sign-and-attest (Cosign)
 sast-scan (semgrep)      ---/
 ```
 
@@ -55,7 +55,7 @@ We upgraded PyYAML to `6.0.1`, Jinja2 to `3.1.2`, and `requests` to `2.32.3` to 
 
 ## 5. Cosign Cryptographic Signing & Provenance
 
-Cosign performs keyless signing using GitHub OIDC tokens and uploads the signatures and SLSA attestations to GHCR:
+Cosign performs keyless signing using GitHub OIDC tokens and uploads the signatures and SLSA attestations to GHCR. Cryptographic signing and SLSA provenance generation are executed specifically in the separate `sign-and-attest` job, which is configured to run only after the `image-scan` gate has successfully verified that the built image contains zero unpatched HIGH or CRITICAL vulnerabilities.
 
 ### Keyless Signing Log
 ```text
