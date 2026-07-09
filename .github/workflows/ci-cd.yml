@@ -81,7 +81,7 @@ jobs:
   # this becomes impractical later, exceptions will be documented explicitly per-CVE, 
   # the same way we handled the Semgrep findings.
   image-scan:
-    needs: build-and-push
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -92,6 +92,8 @@ jobs:
         with:
           scan-type: 'fs'
           scan-ref: 'task-1-hardening/app'
+          scanners: 'vuln'
+          format: 'table'
           exit-code: '1'
           ignore-unfixed: false
           severity: 'CRITICAL,HIGH'
@@ -101,7 +103,8 @@ jobs:
         with:
           scan-type: 'image'
           image-ref: ${{ needs.build-and-push.outputs.image }}
+          scanners: 'vuln'
+          format: 'table'
           exit-code: '1'
           ignore-unfixed: false
           severity: 'CRITICAL,HIGH'
-

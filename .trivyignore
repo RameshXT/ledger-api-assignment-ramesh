@@ -1,0 +1,39 @@
+# Trivy Ignore File
+# Temporary exceptions for unpatchable Debian OS-level vulnerabilities
+# Expiry: 2026-08-08 (Review in 30 days)
+
+# bsdutils, libblkid1, libsmartcols1, libuuid1, login, mount, util-linux
+# Integer Overflow or Wraparound in libblkid/src/partitions/dos.c - No upstream Debian patch available.
+CVE-2026-53615
+
+# gzip
+# Global buffer overflow in LZH decompressor - No upstream Debian patch available.
+CVE-2026-41992
+
+# libacl1
+# Symlink traversal privilege escalation via libacl functions - No upstream Debian patch available.
+CVE-2026-54369
+
+# libblkid1, liblastlog2-2, libmount1, libncursesw6, libsmartcols1, libtinfo6, libuuid1, login, mount, ncurses-base, ncurses-bin, perl-base, util-linux
+# ncurses: Buffer overflow vulnerability may lead to arbitrary code execution - No upstream Debian patch available.
+CVE-2025-69720
+
+# perl-base
+# Path traversal via crafted symlinks - Status: fix_deferred by Debian security team.
+CVE-2026-42496
+
+# perl-base
+# Heap buffer overflow when compiling regular expressions on 32-bit builds - No upstream Debian patch available.
+CVE-2026-8376
+
+# perl-base
+# Arbitrary file modification via crafted hardlinks - Status: fix_deferred by Debian security team.
+CVE-2026-42497
+
+# perl-base
+# Arbitrary code execution via attacker-controlled output glob - No upstream Debian patch available.
+CVE-2026-48962
+
+# perl-base
+# Denial of Service via crafted tar header with large entry - Status: fix_deferred by Debian security team.
+CVE-2026-9538
