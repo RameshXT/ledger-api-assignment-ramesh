@@ -31,15 +31,19 @@ jobs:
   # style/best-practice suggestion warrants stopping deployment.
   sast-scan:
     runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: auto
-        working-directory: ./task-1-hardening/app
+        run: |
+          # 1. Report all findings (including warnings) but do not block the build
+          semgrep scan --config auto task-1-hardening/app || true
+          
+          # 2. Hard block only if there are ERROR-severity findings
+          semgrep scan --config auto --severity ERROR --error task-1-hardening/app
 
   build-and-push:
     needs: [secrets-scan, sast-scan]
