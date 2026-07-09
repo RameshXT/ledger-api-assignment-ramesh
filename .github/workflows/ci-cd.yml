@@ -27,7 +27,8 @@ jobs:
         run: |
           # Retrieve the short SHA for image tagging to avoid using "latest" (which is blocked by Kyverno)
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE=ghcr.io/${{ github.repository_owner }}/ledger-api:$SHORT_SHA
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE=ghcr.io/$OWNER/ledger-api:$SHORT_SHA
           
           # Built directly from task-1-hardening/app/ to maintain a single source of truth 
           # for the application source code and avoid duplication in task-2-cicd.
