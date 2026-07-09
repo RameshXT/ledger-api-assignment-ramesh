@@ -14,7 +14,7 @@ Through targeted upgrades, we successfully resolved all application-level and Py
 
 ## 2. Unfixed OS-Level Vulnerabilities (Debian Base Image)
 
-Trivy flagged 18 HIGH/CRITICAL CVEs originating from core packages in the `python:3.11-slim` base image (Debian 13.5) that have **blank "Fixed Version" fields** upstream:
+Trivy flagged 20 HIGH/CRITICAL CVEs (18 HIGH, 2 CRITICAL) originating from core packages in the `python:3.11-slim` base image (Debian 13.5) that have **blank "Fixed Version" fields** upstream:
 
 | Package | CVE ID | Severity | Status | Reason / Justification |
 | :--- | :--- | :--- | :--- | :--- |
@@ -32,8 +32,8 @@ Trivy flagged 18 HIGH/CRITICAL CVEs originating from core packages in the `pytho
 | `mount` | CVE-2025-69720 | HIGH | affected | No upstream patch available from Debian security team yet. |
 | `ncurses-base` | CVE-2026-8376 | HIGH | affected | No upstream patch available from Debian security team yet. |
 | `ncurses-bin` | CVE-2026-8376 | HIGH | affected | No upstream patch available from Debian security team yet. |
-| `perl-base` | CVE-2026-42496 | HIGH | fix_deferred | Patch deferred by Debian security team. |
-| `perl-base` | CVE-2026-8376 | HIGH | affected | No upstream patch available from Debian security team yet. |
+| `perl-base` | CVE-2026-42496 | CRITICAL | fix_deferred | Patch deferred by Debian security team. |
+| `perl-base` | CVE-2026-8376 | CRITICAL | affected | No upstream patch available from Debian security team yet. |
 | `perl-base` | CVE-2026-42497 | HIGH | fix_deferred | Patch deferred by Debian security team. |
 | `perl-base` | CVE-2026-48962 | HIGH | affected | No upstream patch available from Debian security team yet. |
 | `perl-base` | CVE-2026-9538 | HIGH | affected | No upstream patch available from Debian security team yet. |

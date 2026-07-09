@@ -123,3 +123,8 @@ flagged during a full-history manual audit run (workflow_dispatch) on
 documentation referencing an already-mitigated secret needs care in how it's
 written. Fixed by using a non-matching placeholder format.
 
+---
+
+## 5. Stripe API Key Revocation Status
+This key has been rotated/revoked and is no longer valid. While the key remains permanently visible in the Git history of commit `f6b6128`, it has been deactivated in the Stripe dashboard, rendering it completely inert and safe from exposure.
+

@@ -41,7 +41,7 @@ To ensure the gates do not become developer bottlenecks while maintaining high s
 
 To satisfy PCI compliance and secure the container supply chain:
 * **Keyless Signing**: The workflow installs Cosign and requests an OIDC identity token from GitHub. Cosign exchanges this token for an ephemeral signing certificate, signing the image digest and uploading the signature to GHCR.
-* **SLSA Provenance**: The pipeline generates a SLSA v0.2-compliant build provenance attestation (pointing to GitHub's OIDC builder) and attaches it to the container image on GHCR.
+* **SLSA Provenance**: The pipeline generates a SLSA-style build provenance attestation (pointing to GitHub's OIDC builder) and attaches it to the container image on GHCR.
 
 ---
 
