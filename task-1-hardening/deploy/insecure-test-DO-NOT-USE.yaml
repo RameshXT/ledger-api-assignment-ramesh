@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger-api-insecure
+  namespace: payments
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledger-api-insecure
+  template:
+    metadata:
+      labels:
+        app: ledger-api-insecure
+    spec:
+      containers:
+        - name: ledger-api
+          image: ledger-api:latest
+          ports:
+            - containerPort: 8080

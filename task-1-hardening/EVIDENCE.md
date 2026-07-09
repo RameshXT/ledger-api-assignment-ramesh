@@ -586,9 +586,10 @@ Events:
 $ kubectl apply -f deploy/insecure-test-DO-NOT-USE.yaml
 ```
 ```text
-Error from server: error when creating "/home/rameshxt/dodo-payments/ledger-project/task-1-hardening/deploy/insecure-test-DO-NOT-USE.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "ledger-api" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "ledger-api" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "ledger-api" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "ledger-api" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
+Error from server: error when creating "task-1-hardening/deploy/insecure-test-DO-NOT-USE.yaml": admission webhook "validate.kyverno.svc-fail" denied the request:
 
-resource Deployment/payments/ledger-api-insecure was blocked due to the following policies 
+resource Deployment/payments/ledger-api-insecure was blocked due to the following policies
 
 disallow-latest-tag:
   autogen-require-image-tag: 'validation error: An image tag is required and must
@@ -599,6 +600,8 @@ require-non-root-user:
     /spec/template/spec/securityContext/runAsNonRoot/ rule autogen-check-run-as-non-root[1]
     failed at path /spec/template/spec/containers/0/securityContext/'
 ```
+
+Note: This output demonstrates defense-in-depth. The native Kubernetes Pod Security Standards (`restricted` enforcement) and the Kyverno policies act as two independent layers checking and blocking the insecure deployment.
 
 ---
 

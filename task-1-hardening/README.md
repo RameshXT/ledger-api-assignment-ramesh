@@ -4,6 +4,8 @@ This folder contains the Kubernetes deployment manifests for the `ledger-api` se
 
 When I took over the original setup, it had plaintext credentials committed to the git repo, containers running as root with access to the entire host file system, and no guardrails. Here is how I locked it down.
 
+![Architecture Diagram](./task1-architecture-diagram.png)
+
 ---
 
 ## What was deployed
