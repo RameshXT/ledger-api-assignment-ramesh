@@ -28,13 +28,13 @@
 - [x] Demonstrate self-heal: show ArgoCD automatically reverts the manual change
 
 ## BONUS ITEMS
-- [ ] Upload scanner results as SARIF format so they appear in GitHub Security tab
-- [ ] Cosign verify output proving the image was signed by this workflow (not 
+- [x] Upload scanner results as SARIF format so they appear in GitHub Security tab
+- [x] Cosign verify output proving the image was signed by this workflow (not 
       just that signing happened, but verifiable proof tied to the workflow identity)
 - [ ] Canary or blue-green rollout strategy
 
 ## EVIDENCE/DOCUMENTATION REQUIREMENTS
-- [ ] README.md explaining approach and design decisions
-- [ ] EVIDENCE.md with real pipeline run outputs/links, scan results, 
+- [x] README.md explaining approach and design decisions
+- [x] EVIDENCE.md with real pipeline run outputs/links, scan results, 
       cosign verify output, ArgoCD drift/self-heal proof
-- [ ] Architecture diagram showing the full pipeline flow
+- [x] Architecture diagram showing the full pipeline flow
