@@ -83,17 +83,7 @@ jobs:
           docker push "$IMAGE"
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.5.0
 
-      - name: Sign container image
-        run: |
-          cosign sign --yes "${{ steps.build.outputs.image }}"
-
-      - name: Generate SLSA provenance attestation
-        run: |
-          echo '{"builder":{"id":"https://github.com/Attestations/GitHubHost"},"buildType":"https://github.com/Attestations/GitHubHost@v1"}' > predicate.json
-          cosign attest --yes --type slsaprovenance --predicate predicate.json "${{ steps.build.outputs.image }}"
 
   # Trivy: hard-blocks on CRITICAL/HIGH severity CVEs in dependencies or the built image. 
   # MEDIUM/LOW findings are reported but do not block, since we prioritize fixing what's 
@@ -162,3 +152,65 @@ jobs:
           exit-code: '1'
           ignore-unfixed: false
           severity: 'CRITICAL,HIGH'
+
+  sign-and-attest:
+    needs: [build-and-push, image-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.5.0
+
+      - name: Generate SLSA predicate.json
+        run: |
+          IMAGE_REF="${{ needs.build-and-push.outputs.image }}"
+          docker pull "$IMAGE_REF"
+          IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE_REF" | cut -d'@' -f2)
+          
+          echo "Constructing predicate for $IMAGE_REF @ $IMAGE_DIGEST"
+          cat <<EOF > predicate.json
+          {
+            "builder": {
+              "id": "https://github.com/Attestations/GitHubHost"
+            },
+            "buildType": "https://github.com/Attestations/GitHubHost@v1",
+            "invocation": {
+              "configSource": {
+                "uri": "git+https://github.com/RameshXT/ledger-api-assignment-ramesh.git",
+                "digest": {
+                  "sha1": "${{ github.sha }}"
+                },
+                "entryPoint": ".github/workflows/ci-cd.yml"
+              },
+              "parameters": {
+                "runId": "${{ github.run_id }}",
+                "runNumber": "${{ github.run_number }}"
+              }
+            },
+            "subject": [
+              {
+                "name": "$IMAGE_REF",
+                "digest": {
+                  "sha256": "$IMAGE_DIGEST"
+                }
+              }
+            ]
+          }
+          EOF
+
+      - name: Sign container image
+        run: |
+          cosign sign --yes "${{ needs.build-and-push.outputs.image }}"
+
+      - name: Generate SLSA provenance attestation
+        run: |
+          cosign attest --yes --type slsaprovenance --predicate predicate.json "${{ needs.build-and-push.outputs.image }}"
