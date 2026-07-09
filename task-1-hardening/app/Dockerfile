@@ -9,4 +9,4 @@ COPY app.py .
 
 EXPOSE 8080
 
-CMD ["python", "app.py"]
+CMD ["python", "app.py"]  # nosemgrep - Intentionally left vulnerable — reserved as a real finding for Task 4 penetration testing. See task-2-cicd/DEFERRED-FINDINGS.md.
