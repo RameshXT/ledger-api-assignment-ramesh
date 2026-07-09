@@ -32,8 +32,8 @@ To keep the development feedback loop fast and prevent blocking current work due
 
 ### Local Scan Output (Full History)
 ```text
-Finding:     value: "sk_live_9f3a2b7c1e4d8REDACTED"
-Secret:      sk_live_9f3a2b7c1e4d8REDACTED
+Finding:     value: "[REDACTED-STRIPE-KEY-EXAMPLE]"
+Secret:      [REDACTED-STRIPE-KEY-EXAMPLE]
 RuleID:      stripe-access-token
 Entropy:     4.582119
 File:        task-1-hardening/deploy/deployment.yaml
@@ -114,3 +114,12 @@ gitleaks cmd: gitleaks detect --redact -v --exit-code=2 --report-format=sarif --
  11:32AM INF no leaks found
 ✅ No leaks detected
 ```
+
+## Note: Self-Referential False Positive
+An earlier version of this document quoted the redacted Stripe key in a format
+that still matched Gitleaks' stripe-access-token detection pattern. It was
+flagged during a full-history manual audit run (workflow_dispatch) on
+2026-07-09. This confirms Gitleaks pattern-matches regardless of intent — even
+documentation referencing an already-mitigated secret needs care in how it's
+written. Fixed by using a non-matching placeholder format.
+
