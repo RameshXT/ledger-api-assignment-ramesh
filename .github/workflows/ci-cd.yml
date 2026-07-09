@@ -48,6 +48,8 @@ jobs:
   build-and-push:
     needs: [secrets-scan, sast-scan]
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.build.outputs.image }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -60,6 +62,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push container image
+        id: build
         run: |
           # Retrieve the short SHA for image tagging to avoid using "latest" (which is blocked by Kyverno)
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
@@ -70,4 +73,35 @@ jobs:
           # for the application source code and avoid duplication in task-2-cicd.
           docker build -t "$IMAGE" ./task-1-hardening/app
           docker push "$IMAGE"
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+  # Trivy: hard-blocks on CRITICAL/HIGH severity CVEs in dependencies or the built image. 
+  # MEDIUM/LOW findings are reported but do not block, since we prioritize fixing what's 
+  # actually exploitable first. Unfixed CRITICAL/HIGH CVEs still block by default; if 
+  # this becomes impractical later, exceptions will be documented explicitly per-CVE, 
+  # the same way we handled the Semgrep findings.
+  image-scan:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy FS Scan (Dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: 'task-1-hardening/app'
+          exit-code: '1'
+          ignore-unfixed: false
+          severity: 'CRITICAL,HIGH'
+
+      - name: Run Trivy Image Scan (Container Image)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ${{ needs.build-and-push.outputs.image }}
+          exit-code: '1'
+          ignore-unfixed: false
+          severity: 'CRITICAL,HIGH'
 
