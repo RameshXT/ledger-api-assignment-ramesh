@@ -1,6 +1,6 @@
 # Service Mesh and Zero Trust Security
 
-This folder contains the files for Task 3. A service mesh was set up using Istio, and network security policies were also implemented. These controls secure the communication between our services.
+This folder contains the files for Task 3. A service mesh was set up using Istio, and network security policies were also implemented. These controls secure the communication between our services. All mesh security and traffic policies are now declaratively managed via GitOps using a dedicated ArgoCD Application (`argocd-app-mesh.yaml`), completely separate from Task 1's main application deployment (`ledger-app`).
 
 ## Istio Installation and CNI
 

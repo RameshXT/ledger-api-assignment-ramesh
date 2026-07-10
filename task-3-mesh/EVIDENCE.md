@@ -623,10 +623,10 @@ Traffic splitting was configured to distribute workloads between version 1 and v
 ### DestinationRule and VirtualService Configuration
 
 ```yaml
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: ledger-api-subsets
+  name: ledger-api-dr
   namespace: payments
 spec:
   host: ledger-api.payments.svc.cluster.local
@@ -638,10 +638,10 @@ spec:
     labels:
       version: v2
 ---
-apiVersion: networking.istio.io/v1beta1
+apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: ledger-api-canary
+  name: ledger-api-internal-vs
   namespace: payments
 spec:
   hosts:
@@ -686,3 +686,39 @@ Two unexpected issues were encountered during the configuration phase.
 
 1. **Pod Security Standard Regression:** Using the default Istio setup required the privileged `istio-init` container. This violated our restricted pod security standard. This was resolved by installing Istio with CNI enabled. This handled traffic redirection at the node layer and allowed the namespace to remain restricted.
 2. **ArgoCD Self Heal Reversion:** When we manually updated version labels on pods for canary testing, ArgoCD self heal automatically reverted them to the tracked git baseline. This was resolved by writing the version configurations directly to the deployment yaml manifests in the git repository.
+
+---
+
+## 10. GitOps Management of Mesh Policies (ArgoCD)
+
+Originally, Task 3's mesh policies (PeerAuthentication, AuthorizationPolicies, NetworkPolicies, VirtualServices, and Gateways) were applied manually to the cluster via `kubectl` and were not tracked in Git. 
+
+To bring these under declarative GitOps management, we created a new ArgoCD Application (`ledger-mesh`) pointing to the `task-3-mesh` directory with exclusions for scripts and documentation assets.
+
+### 1. Manual Deletion (Drift Testing)
+To verify drift detection and self-healing of the mesh security controls, the `deny-all` AuthorizationPolicy was manually deleted:
+```bash
+$ kubectl delete authorizationpolicy deny-all -n payments
+authorizationpolicy.security.istio.io "deny-all" deleted
+```
+
+### 2. Automated Restoration Proof
+Within seconds, the ArgoCD controller detected the drift and automatically re-applied the `deny-all` policy:
+```bash
+$ kubectl get authorizationpolicy -n payments
+NAME                        ACTION   AGE
+allow-reporting-to-ledger   ALLOW    7h33m
+deny-all                             25s
+```
+
+### 3. ArgoCD Controller Audit Logs
+The audit trace from the controller shows the automatic sync detection and resolution events:
+```text
+Events:
+  Type    Reason              Age   From                           Message
+  ----    ------              ----  ----                           -------
+  Normal  OperationStarted    26s   argocd-application-controller  Initiated automated sync to 'a313e4f4e3de6d80dac4074dd0225586b9a15008'
+  Normal  ResourceUpdated     26s   argocd-application-controller  Updated sync status: Synced -> OutOfSync
+  Normal  ResourceUpdated     26s   argocd-application-controller  Updated sync status: OutOfSync -> Synced
+  Normal  OperationCompleted  25s   argocd-application-controller  Partial sync operation to a313e4f4e3de6d80dac4074dd0225586b9a15008 succeeded
+```
