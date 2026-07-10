@@ -14,6 +14,8 @@ secrets-scan (gitleaks)  ---.
 sast-scan (semgrep)      ---/
 ```
 
+![Pipeline Run Success](img/pipeline_run.png)
+
 ---
 
 ## 2. Gitleaks Secrets Scanning Gate
@@ -96,6 +98,8 @@ NAME        READY   UP-TO-DATE   AVAILABLE   AGE
 reporting   1/1     1            1           9h
 ```
 
+![ArgoCD Self Healing](img/argocd_self_heal.png)
+
 ### ArgoCD Application Event Trail
 Running a query on the ArgoCD controllers shows the automated sync triggering:
 ```text
@@ -104,8 +108,10 @@ LAST SEEN   TYPE     REASON             OBJECT                   MESSAGE
 21s         Normal   OperationStarted   application/ledger-app   Initiated automated sync to '9ab80fcba5464079bcab46617d1b772939b1cbd0'
 21s         Normal   ResourceUpdated    application/ledger-app   Updated sync status:  -> OutOfSync
 20s         Normal   ResourceUpdated    application/ledger-app   Updated health status: Healthy -> Progressing
-19s         Normal   ResourceUpdated    application/ledger-app   Updated health status: Progressing -> Healthy
+21s         Normal   ResourceUpdated    application/ledger-app   Updated health status: Progressing -> Healthy
 ```
+
+![ArgoCD Events Trail](img/argocd_events.png)
 
 ---
 
@@ -124,6 +130,8 @@ The following checks were performed on each of these signatures:
 
 [{"critical":{"identity":{"docker-reference":"ghcr.io/rameshxt/ledger-api"},"image":{"docker-manifest-digest":"sha256:b7940030ca7910d637554aa17244e92faf9e6172773bc774c3ad4a8b086fc342"},"type":"cosign container image signature"},"optional":{"1.3.6.1.4.1.57264.1.1":"https://token.actions.githubusercontent.com","1.3.6.1.4.1.57264.1.2":"push","1.3.6.1.4.1.57264.1.3":"9ab80fcba5464079bcab46617d1b772939b1cbd0","1.3.6.1.4.1.57264.1.4":"Secure CI/CD Pipeline","1.3.6.1.4.1.57264.1.5":"RameshXT/ledger-api-assignment-ramesh","1.3.6.1.4.1.57264.1.6":"refs/heads/main"}}]
 ```
+
+![Cosign Signature Verification](img/cosign_verification.png)
 
 ---
 
@@ -156,6 +164,8 @@ NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 ledger-api   3/3     3            3           7h24m
 ```
 
+![ArgoCD Self Healing Ledger API](img/argocd_self_heal.png)
+
 ### 4. ArgoCD Events Trail proving Self Heal
 ```bash
 $ kubectl describe application ledger-app -n argocd | tail -10
@@ -168,3 +178,6 @@ $ kubectl describe application ledger-app -n argocd | tail -10
   Normal  OperationCompleted  30s    argocd-application-controller  Partial sync operation to 3dfa903ab4f671ed160bb499c7d1181a9a543c37 succeeded
   Normal  ResourceUpdated     29s    argocd-application-controller  Updated health status: Progressing -> Healthy
 ```
+
+![ArgoCD Events Trail Ledger API](img/argocd_events.png)
+
