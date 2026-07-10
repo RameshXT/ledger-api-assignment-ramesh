@@ -1,0 +1,18 @@
+# Gitleaks ignore file
+# Ignore false positives for demo tokens and GPG public key IDs in Task 4 reports
+
+# Commit-based fingerprints from scanning history
+2b335c08124e01549a444542fac66e8073795266:task-4-recon-pentest/PENTEST_REPORT.md:generic-api-key:78
+2b335c08124e01549a444542fac66e8073795266:task-4-recon-pentest/PENTEST_REPORT.md:generic-api-key:183
+ecf5345422c19e73ead3849ff7993dc38c07aa21:task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:224
+ecf5345422c19e73ead3849ff7993dc38c07aa21:task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:241
+ecf5345422c19e73ead3849ff7993dc38c07aa21:task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:258
+ecf5345422c19e73ead3849ff7993dc38c07aa21:task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:322
+
+# No-git local scanning fingerprints
+task-4-recon-pentest/PENTEST_REPORT.md:generic-api-key:78
+task-4-recon-pentest/PENTEST_REPORT.md:generic-api-key:183
+task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:224
+task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:241
+task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:258
+task-4-recon-pentest/recon/EVIDENCE.md:generic-api-key:322
