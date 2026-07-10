@@ -2,7 +2,7 @@
 
 **Candidate:** Ramesh  
 **Role:** Security & DevOps Engineer  
-**Assessment:** 4-task end-to-end security hardening, secure delivery, zero-trust networking, and penetration testing of the `ledger-api` microservice.
+**Assessment:** Security & DevOps Engineer Technical Assessment
 
 ---
 
