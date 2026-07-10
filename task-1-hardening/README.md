@@ -39,13 +39,11 @@ Leaving Stripe keys and database passwords in plain text in git commits is a hug
 Instead of just deleting the plaintext fields, I used Sealed Secrets. I created a standard Kubernetes Secret locally, encrypted it using the cluster's Sealed Secrets controller certificate, and committed only the encrypted YAML (`deploy/secrets.yaml`). Only the controller running inside the cluster holds the private key to decrypt it back into a standard Secret at runtime.
 
 ### 5. Kyverno Admission Guardrails
-I set up Kyverno policies in the cluster to act as an automated gatekeeper. Even if a developer accidentally commits an insecure deployment manifest in the future, Kyverno will intercept the deployment request at the API level and reject it. These rules explicitly block containers running as root and reject images tagged with `:latest` (since latest tags can introduce untested dependencies unexpectedly). The `verifyImages` Kyverno policy for unsigned-image rejection is intentionally deferred to Task 2, since image signing (Cosign) is implemented there and the policy needs the signing setup to exist first, as referenced in the TODO comment in [kyverno-policies.yaml](file:///Ubuntu-24.04/home/rameshxt/dodo-payments/ledger-project/task-1-hardening/deploy/kyverno-policies.yaml#L58).
+I set up three Kyverno ClusterPolicies to act as automated gatekeepers. Even if a developer accidentally commits an insecure deployment manifest in the future, Kyverno intercepts the request at the API level and rejects it before anything gets scheduled.
 
----
-
-## Sequencing decision: Image signatures
-
-I did not activate the "reject unsigned images" Kyverno policy yet. Because we have not built the automated build and image signing pipeline yet (that is the scope of Task 2), enabling it now would block all local deployments. I will add the signature verification rule once the signing pipeline is ready in the next task.
+- `require-non-root-user`: blocks containers that do not set `runAsNonRoot: true`.
+- `disallow-latest-tag`: blocks any image reference using the `:latest` tag.
+- `require-signed-images`: uses `verifyImages` with Cosign keyless verification to reject any image from `ghcr.io/rameshxt/*` that was not signed by our GitHub Actions workflow OIDC identity. This ties directly to Task 2's Cosign signing step.
 
 ---
 

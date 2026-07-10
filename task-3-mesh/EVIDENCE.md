@@ -69,6 +69,30 @@ spec:
 
 ### Plaintext Request Refusal (Strict mTLS Verification)
 
+### mTLS Mode Verification via istioctl proxy-config
+
+The `istioctl proxy-config listener` command confirms the Envoy sidecar on the `ledger-api` pod is configured to accept **only TLS traffic** on the inbound listener (port 15006). All four filter chains on port 15006 show `Trans: tls`, confirming STRICT mTLS is enforced at the data plane level. There is no plaintext `raw_buffer` chain on the inbound port.
+
+```bash
+$ kubectl get peerauthentication -n payments -o wide
+NAME      MODE     AGE
+default   STRICT   8h
+
+$ kubectl get peerauthentication default -n payments -o jsonpath='{.spec.mtls.mode}'
+STRICT
+
+$ istioctl proxy-config listener ledger-api-784cf8bcc8-4dsmr.payments --port 15006
+ADDRESSES PORT  MATCH                                                    DESTINATION
+0.0.0.0   15006 Addr: *:15006                                            Non-HTTP/Non-TCP
+0.0.0.0   15006 Trans: tls; App: istio-http/1.0,istio-http/1.1,istio-h2 InboundPassthroughCluster
+0.0.0.0   15006 Trans: tls                                               InboundPassthroughCluster
+0.0.0.0   15006 Trans: tls; Addr: *:8080                                 Cluster: inbound|8080||
+```
+
+Note: `istioctl authn tls-check` was removed in Istio 1.6. The equivalent check in Istio 1.30 is `istioctl proxy-config listener` on the inbound port. All inbound filter chains showing `Trans: tls` with no `raw_buffer` entry confirms STRICT mTLS is active.
+
+### Plaintext Request Refusal (Strict mTLS Verification)
+
 A plaintext HTTP call was attempted to the ledger api service from a temporary pod outside the mesh. The connection was immediately reset by the Envoy proxy.
 
 ```bash

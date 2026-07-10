@@ -359,8 +359,9 @@ $ kubectl get clusterpolicy
 ```
 ```text
 NAME                    ADMISSION   BACKGROUND   READY   AGE   MESSAGE
-disallow-latest-tag     true        true         True    15m   Ready
-require-non-root-user   true        true         True    15m   Ready
+disallow-latest-tag     true        true         True    9h    Ready
+require-non-root-user   true        true         True    9h    Ready
+require-signed-images   true        false        True    21s   Ready
 ```
 
 ---
