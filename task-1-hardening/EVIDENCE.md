@@ -30,6 +30,8 @@ replicaset.apps/ledger-api-79db76cd5    0         0         0       21m
 replicaset.apps/reporting-67ccdc8894    1         1         1       21m
 ```
 
+![All Resources](img/all_resources.png)
+
 ---
 
 ## 2. Hardened Deployment Manifest
@@ -130,6 +132,8 @@ $ kubectl get pod -n payments -l app=ledger-api -o jsonpath='{.items[0].spec.con
 }
 ```
 
+![Container Security Context](img/container_security_context.png)
+
 ---
 
 ## 4. SecurityContext Pod Level (Runtime Proof)
@@ -144,6 +148,8 @@ $ kubectl get pod -n payments -l app=ledger-api -o jsonpath='{.items[0].spec.sec
   }
 }
 ```
+
+![Pod Security Context](img/pod_security_context.png)
 
 ---
 
@@ -164,6 +170,8 @@ $ kubectl describe pod ledger-api-79c8695b76-ddrfv -n payments | grep -A 10 "Lim
       ledger-api-config  ConfigMap  Optional: false
     Environment:
 ```
+
+![Resource Limits and Probes](img/resources_and_probes.png)
 
 ---
 
@@ -246,6 +254,8 @@ Subjects:
   ServiceAccount  ledger-api  payments
 ```
 
+![Service Account and RBAC Roles/Bindings](img/sa_and_rbac.png)
+
 ---
 
 ## 11. SealedSecret and Decrypted Secret (metadata only)
@@ -258,6 +268,9 @@ ledger-api-secrets   22m
 NAME                 TYPE     DATA   AGE
 ledger-api-secrets   Opaque   2      22m
 ```
+
+![SealedSecret](img/sealed_secret.png)
+![Decrypted Secret](img/decrypted_secret.png)
 
 ---
 
@@ -601,6 +614,8 @@ require-non-root-user:
     /spec/template/spec/securityContext/runAsNonRoot/ rule autogen-check-run-as-non-root[1]
     failed at path /spec/template/spec/containers/0/securityContext/'
 ```
+
+![Kyverno Policy Rejection](img/kyverno_rejection.png)
 
 Note: This output demonstrates defence in depth. The native Kubernetes Pod Security Standards (`restricted` enforcement) and the Kyverno policies act as two independent layers checking and blocking the insecure deployment.
 
