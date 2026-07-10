@@ -16,6 +16,11 @@ LEDGER = [
 ]
 
 
+import secrets
+
+TOKEN_STORE = {}
+
+
 @app.route("/health")
 def health():
     version = os.environ.get("APP_VERSION", "v1")
@@ -26,7 +31,8 @@ def health():
 def tokenize():
     payload = request.get_json(silent=True) or {}
     pan = payload.get("pan", "")
-    token = "tok_" + hashlib.sha256(pan.encode()).hexdigest()[:24]
+    token = "tok_" + secrets.token_hex(12)
+    TOKEN_STORE[token] = pan
     return jsonify(token=token, last4=pan[-4:])
 
 
