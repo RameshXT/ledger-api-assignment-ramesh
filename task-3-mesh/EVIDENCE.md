@@ -6,7 +6,7 @@ This document provides raw logs, configurations, and outputs that prove the succ
 
 ## 1. Istio Installation and CNI Fix
 
-We installed Istio using the demo profile with the CNI component enabled in the kube system namespace.
+Istio was installed using the demo profile with the CNI component enabled in the kube system namespace.
 
 ### Istio CNI Installation Command and Output
 
@@ -27,7 +27,7 @@ $ istioctl install --set profile=demo --set components.cni.enabled=true --set co
 
 ### Namespace Pod Security Standards Label Verification
 
-We verified that the payments namespace remained under the restricted pod security profile.
+Verification was done that the payments namespace remained under the restricted pod security profile.
 
 ```bash
 $ kubectl get ns payments --show-labels
@@ -37,7 +37,7 @@ payments   Active   19h   istio-injection=enabled,kubernetes.io/metadata.name=pa
 
 ### Kube System Namespace Pod Status
 
-We confirmed that the Calico node and Istio CNI node pods are running successfully.
+It was confirmed that the Calico node and Istio CNI node pods are running successfully.
 
 ```bash
 $ kubectl get pods -n kube-system | grep -E "calico|istio-cni"
@@ -50,7 +50,7 @@ istio-cni-node-xr8r5                         1/1     Running   0             69m
 
 ## 2. STRICT mTLS Proof
 
- We applied a namespace wide PeerAuthentication policy to enforce strict mutual TLS.
+ A namespace wide PeerAuthentication policy was applied to enforce strict mutual TLS.
 
 ### PeerAuthentication Configuration
 
@@ -67,7 +67,7 @@ spec:
 
 ### Plaintext Request Refusal (Strict mTLS Verification)
 
-We attempted a plaintext HTTP call to the ledger api service from a temporary pod outside the mesh. The connection was immediately reset by the Envoy proxy.
+A plaintext HTTP call was attempted to the ledger api service from a temporary pod outside the mesh. The connection was immediately reset by the Envoy proxy.
 
 ```bash
 $ kubectl exec tmp-non-mesh -n default -- curl -iv http://ledger-api.payments.svc.cluster.local:8080/health
@@ -92,7 +92,7 @@ command terminated with exit code 56
 
 ### Plaintext Success under Permissive Mode (Contrast Check)
 
-We temporarily switched the PeerAuthentication policy mode to permissive. The plaintext request succeeded.
+The PeerAuthentication policy mode was temporarily switched to permissive. The plaintext request succeeded.
 
 ```bash
 $ kubectl patch peerauthentication default -n payments --type merge -p '{"spec":{"mtls":{"mode":"PERMISSIVE"}}}'
@@ -104,7 +104,7 @@ $ kubectl exec tmp-non-mesh -n default -- curl -s http://ledger-api.payments.svc
 
 ### Reversion to STRICT Mode
 
-We reverted the policy back to strict. Plaintext calls were refused once again.
+The policy was reverted back to strict. Plaintext calls were refused once again.
 
 ```bash
 $ kubectl patch peerauthentication default -n payments --type merge -p '{"spec":{"mtls":{"mode":"STRICT"}}}'
@@ -128,7 +128,7 @@ command terminated with exit code 56
 
 ## 3. AuthorizationPolicy Proof
 
-We configured a default deny policy along with an explicit allow policy for the reporting service.
+A default deny policy was configured along with an explicit allow policy for the reporting service.
 
 ### AuthorizationPolicy Configuration
 
@@ -159,7 +159,7 @@ spec:
 
 ### Unauthorized Request Rejection
 
-We sent a request from an unauthorized mesh pod. It was blocked immediately with an HTTP 403 Forbidden status.
+A request was sent from an unauthorized mesh pod. It was blocked immediately with an HTTP 403 Forbidden status.
 
 ```bash
 $ kubectl exec tmp-unauth-mesh -n payments -c client -- curl -iv http://ledger-api.payments.svc.cluster.local:8080/health
@@ -182,7 +182,7 @@ RBAC: access denied
 
 ### Authorized Request Success
 
-We sent a request from the authorized reporting pod. The request succeeded with an HTTP 200 OK status.
+A request was sent from the authorized reporting pod. The request succeeded with an HTTP 200 OK status.
 
 ```bash
 $ kubectl exec reporting-7b55d78b8d-vbgnn -n payments -c client -- curl -iv http://ledger-api.payments.svc.cluster.local:8080/health
@@ -223,7 +223,7 @@ x-envoy-upstream-service-time: 13
 
 ### Sanity Check (Deleting the Allow Rule)
 
-We temporarily deleted the allow rule. This blocked requests from the reporting service.
+The allow rule was temporarily deleted. This blocked requests from the reporting service.
 
 ```bash
 $ kubectl delete authorizationpolicy allow-reporting-to-ledger -n payments
@@ -240,7 +240,7 @@ authorizationpolicy.security.istio.io/allow-reporting-to-ledger created
 
 ## 4. Certificate Issuance and Rotation Proof
 
-Workload certificates are generated dynamically. We inspected the keys using proxy configuration details.
+Workload certificates are generated dynamically. Workload certificates were inspected using proxy configuration details.
 
 ### Decoded Workload Certificate Details
 
@@ -320,7 +320,7 @@ notAfter=Jul  7 03:47:02 2036 GMT
 
 ### Built in CA Verification
 
-We verified that there is no custom CA secret in the namespace. This confirms the control plane uses its own root authority.
+It was verified that there is no custom CA secret in the namespace. This confirms the control plane uses its own root authority.
 
 ```bash
 $ kubectl get secret cacerts -n istio-system
@@ -331,7 +331,7 @@ Error from server (NotFound): secrets "cacerts" not found
 
 ## 5. NetworkPolicy Proof
 
-We enforced L3/L4 NetworkPolicies in the payments namespace.
+L3/L4 NetworkPolicies were enforced in the payments namespace.
 
 ### Default Deny NetworkPolicy
 
@@ -432,7 +432,7 @@ spec:
 
 ### Verification of NetworkPolicy Enforcement
 
-When we temporarily removed the allow rules, name resolution failed because DNS egress was blocked. Direct IP requests timed out at L3/L4. This caused Envoy to return a 503 connection timeout response.
+When the allow rules were temporarily removed, name resolution failed because DNS egress was blocked. Direct IP requests timed out at L3/L4. This caused Envoy to return a 503 connection timeout response.
 
 ```bash
 $ kubectl delete networkpolicy allow-reporting -n payments
@@ -514,13 +514,13 @@ x-envoy-upstream-service-time: 2
 {"status":"ok","version":"v1"}
 ```
 
-*Note: For these network rules to be enforced, we rebuilt the minikube cluster with Calico CNI.*
+*Note: For these network rules to be enforced, the minikube cluster was rebuilt with Calico CNI.*
 
 ---
 
 ## 6. Ingress Gateway with TLS Proof
 
-We exposed the ledger api externally through the Istio Ingress Gateway.
+The ledger api was exposed externally through the Istio Ingress Gateway.
 
 ### Gateway and VirtualService Configuration
 
@@ -609,7 +609,7 @@ $ curl -iv http://ledger-api.local:30417/health --resolve ledger-api.local:30417
 
 ## 7. Canary Release Proof
 
-We configured traffic splitting to distribute workloads between version 1 and version 2.
+Traffic splitting was configured to distribute workloads between version 1 and version 2.
 
 ### DestinationRule and VirtualService Configuration
 
@@ -661,7 +661,7 @@ total lines:
 80 /tmp/canary-test-output.txt
 ```
 
-*Note: Initially, these version labels existed only as manual changes. Enabling ArgoCD self heal again reverted them. We fixed this permanently by saving the version manifests inside the Git repository path tracked by ArgoCD.*
+*Note: Initially, these version labels existed only as manual changes. Enabling ArgoCD self heal again reverted them. This was fixed permanently by saving the version manifests inside the Git repository path tracked by ArgoCD.*
 
 ---
 
@@ -673,7 +673,7 @@ A complete table mapping these zero trust network, encryption, and access polici
 
 ## 9. Unexpected Findings during this Task
 
-We encountered two unexpected issues during our configuration phase.
+Two unexpected issues were encountered during the configuration phase.
 
-1. **Pod Security Standard Regression:** Using the default Istio setup required the privileged `istio-init` container. This violated our restricted pod security standard. We resolved this by installing Istio with CNI enabled. This handled traffic redirection at the node layer and allowed the namespace to remain restricted.
-2. **ArgoCD Self Heal Reversion:** When we manually updated version labels on pods for canary testing, ArgoCD self heal automatically reverted them to the tracked git baseline. We resolved this by writing the version configurations directly to the deployment yaml manifests in the git repository.
+1. **Pod Security Standard Regression:** Using the default Istio setup required the privileged `istio-init` container. This violated our restricted pod security standard. This was resolved by installing Istio with CNI enabled. This handled traffic redirection at the node layer and allowed the namespace to remain restricted.
+2. **ArgoCD Self Heal Reversion:** When we manually updated version labels on pods for canary testing, ArgoCD self heal automatically reverted them to the tracked git baseline. This was resolved by writing the version configurations directly to the deployment yaml manifests in the git repository.
