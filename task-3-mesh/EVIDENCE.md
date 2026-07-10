@@ -31,6 +31,8 @@ Verification was done that the payments namespace remained under the restricted 
 
 ```bash
 $ kubectl get ns payments --show-labels
+```
+```text
 NAME       STATUS   AGE   LABELS
 payments   Active   19h   istio-injection=enabled,kubernetes.io/metadata.name=payments,pod-security.kubernetes.io/enforce=restricted
 ```
@@ -71,7 +73,9 @@ A plaintext HTTP call was attempted to the ledger api service from a temporary p
 
 ```bash
 $ kubectl exec tmp-non-mesh -n default -- curl -iv http://ledger-api.payments.svc.cluster.local:8080/health
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+```
+```text
+  % Total   % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0* Host ledger-api.payments.svc.cluster.local:8080 was resolved.
 * IPv6: (none)
@@ -96,9 +100,14 @@ The PeerAuthentication policy mode was temporarily switched to permissive. The p
 
 ```bash
 $ kubectl patch peerauthentication default -n payments --type merge -p '{"spec":{"mtls":{"mode":"PERMISSIVE"}}}'
+```
+```text
 peerauthentication.security.istio.io/default patched
-
+```
+```bash
 $ kubectl exec tmp-non-mesh -n default -- curl -s http://ledger-api.payments.svc.cluster.local:8080/health
+```
+```json
 {"status":"ok","version":"v1"}
 ```
 
