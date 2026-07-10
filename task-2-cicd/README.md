@@ -32,7 +32,7 @@ To ensure the gates do not become developer bottlenecks while maintaining high s
 ### 3. Trivy (Dependency / Image Scan)
 * **Fail Policy**: Hard-blocks on **`CRITICAL`** or **`HIGH`** severity vulnerabilities.
 * **Vulnerability Fix Policy**: 
-  - Upstream-patched findings must be resolved immediately (e.g. we upgraded `requests` to `2.32.3` and upgraded pip tools in the Dockerfile).
+  - Upstream-patched findings must be resolved immediately (e.g. we upgraded `PyYAML` to `6.0.1`, `Jinja2` to `3.1.2`, and removed the unused `requests` dependency entirely after deleting the insecure `/fetch` endpoint).
   - Unpatched OS-level vulnerabilities with no "Fixed Version" are managed using a `.trivyignore` file with explicit review/expiry dates (30 days) and documented justifications in [TRIVY-FINDINGS.md](./TRIVY-FINDINGS.md).
 
 ---

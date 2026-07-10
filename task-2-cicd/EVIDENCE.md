@@ -125,3 +125,46 @@ The following checks were performed on each of these signatures:
 [{"critical":{"identity":{"docker-reference":"ghcr.io/rameshxt/ledger-api"},"image":{"docker-manifest-digest":"sha256:b7940030ca7910d637554aa17244e92faf9e6172773bc774c3ad4a8b086fc342"},"type":"cosign container image signature"},"optional":{"1.3.6.1.4.1.57264.1.1":"https://token.actions.githubusercontent.com","1.3.6.1.4.1.57264.1.2":"push","1.3.6.1.4.1.57264.1.3":"9ab80fcba5464079bcab46617d1b772939b1cbd0","1.3.6.1.4.1.57264.1.4":"Secure CI/CD Pipeline","1.3.6.1.4.1.57264.1.5":"RameshXT/ledger-api-assignment-ramesh","1.3.6.1.4.1.57264.1.6":"refs/heads/main"}}]
 ```
 
+---
+
+## 8. GitOps Drift Detection & Self-Heal (ledger-api)
+
+To verify real-time drift detection and automated self-healing, we manually modified the live `ledger-api` deployment replica count directly on the cluster and observed ArgoCD's automated corrective actions:
+
+### 1. Manual Scale Command (Introducing Drift)
+```bash
+$ kubectl scale deployment ledger-api -n payments --replicas=5
+deployment.apps/ledger-api scaled
+```
+
+### 2. Immediate Sync Status Check
+```bash
+$ kubectl get application ledger-app -n argocd -o wide
+NAME         SYNC STATUS   HEALTH STATUS   REVISION                                   PROJECT
+ledger-app   Synced        Healthy         3dfa903ab4f671ed160bb499c7d1181a9a543c37   default
+```
+
+### 3. Automated Reversion (Self-Heal Active)
+Within seconds, the controller detected the drift and reconciled the replica count back down to 3:
+```bash
+$ kubectl get application ledger-app -n argocd -o wide
+NAME         SYNC STATUS   HEALTH STATUS   REVISION                                   PROJECT
+ledger-app   Synced        Healthy         3dfa903ab4f671ed160bb499c7d1181a9a543c37   default
+
+$ kubectl get deployment ledger-api -n payments
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+ledger-api   3/3     3            3           7h24m
+```
+
+### 4. ArgoCD Events Trail proving Self-Heal
+```bash
+$ kubectl describe application ledger-app -n argocd | tail -10
+  Type    Reason              Age    From                           Message
+  ----    ------              ----   ----                           -------
+  Normal  OperationStarted    32s    argocd-application-controller  Initiated automated sync to '3dfa903ab4f671ed160bb499c7d1181a9a543c37'
+  Normal  ResourceUpdated     32s    argocd-application-controller  Updated sync status: Synced -> OutOfSync
+  Normal  ResourceUpdated     32s    argocd-application-controller  Updated health status: Healthy -> Progressing
+  Normal  ResourceUpdated     30s    argocd-application-controller  Updated sync status: OutOfSync -> Synced
+  Normal  OperationCompleted  30s    argocd-application-controller  Partial sync operation to 3dfa903ab4f671ed160bb499c7d1181a9a543c37 succeeded
+  Normal  ResourceUpdated     29s    argocd-application-controller  Updated health status: Progressing -> Healthy
+```
