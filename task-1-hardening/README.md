@@ -31,7 +31,7 @@ I also added HTTP liveness and readiness health checks pointing to `/health`. If
 ### 3. ServiceAccount and Least-Privilege RBAC
 I stopped using the `default` service account. The main risk with the default service account is that it gets automatically mounted into every pod in the namespace. If anyone (like a future teammate) attaches an RBAC permission rule to the default service account later, even by accident, every pod sharing that default account instantly inherits those permissions. This makes it a shared and highly vulnerable attack surface.
 
-I created a dedicated `ledger-api` service account. I also attached a completely empty `Role` and `RoleBinding` to it since this specific web service does not need to talk to the Kubernetes API server at all.
+I created a dedicated `ledger-api` service account. I also attached a completely empty `Role` and `RoleBinding` to it since this specific web service does not need to talk to the Kubernetes API server at all. Specifically, `ledger-api-role` has `rules: []` intentionally, documenting that ledger-api's ServiceAccount requires zero Kubernetes API access to function, which represents the strictest form of least privilege rather than an incomplete implementation.
 
 ### 4. Secrets Management with Sealed Secrets
 Leaving Stripe keys and database passwords in plain text in git commits is a huge risk because anyone with access to the repository can steal them. 
@@ -39,7 +39,7 @@ Leaving Stripe keys and database passwords in plain text in git commits is a hug
 Instead of just deleting the plaintext fields, I used Sealed Secrets. I created a standard Kubernetes Secret locally, encrypted it using the cluster's Sealed Secrets controller certificate, and committed only the encrypted YAML (`deploy/secrets.yaml`). Only the controller running inside the cluster holds the private key to decrypt it back into a standard Secret at runtime.
 
 ### 5. Kyverno Admission Guardrails
-I set up Kyverno policies in the cluster to act as an automated gatekeeper. Even if a developer accidentally commits an insecure deployment manifest in the future, Kyverno will intercept the deployment request at the API level and reject it. These rules explicitly block containers running as root and reject images tagged with `:latest` (since latest tags can introduce untested dependencies unexpectedly).
+I set up Kyverno policies in the cluster to act as an automated gatekeeper. Even if a developer accidentally commits an insecure deployment manifest in the future, Kyverno will intercept the deployment request at the API level and reject it. These rules explicitly block containers running as root and reject images tagged with `:latest` (since latest tags can introduce untested dependencies unexpectedly). The `verifyImages` Kyverno policy for unsigned-image rejection is intentionally deferred to Task 2, since image signing (Cosign) is implemented there and the policy needs the signing setup to exist first, as referenced in the TODO comment in [kyverno-policies.yaml](file:///Ubuntu-24.04/home/rameshxt/dodo-payments/ledger-project/task-1-hardening/deploy/kyverno-policies.yaml#L58).
 
 ---
 
@@ -52,7 +52,7 @@ I did not activate the "reject unsigned images" Kyverno policy yet. Because we h
 ## Completed Bonuses
 
 I also implemented three bonus security controls:
-1. **Persona-based RBAC**: I created three separate Roles and RoleBindings in `deploy/bonus-persona-rbac.yaml` for a Developer (read-only), Operator (read-only plus deployment restarts/scaling), and Admin (full namespace control). They are ready to be bound to users.
+1. **Persona-based RBAC**: I created three separate Roles and RoleBindings in `deploy/bonus-persona-rbac.yaml` for a Developer (read-only), Operator (read-only plus deployment restarts/scaling), and Admin (full namespace control). They are ready to be bound to users. Note that the `developer-user`, `operator-user`, and `admin-user` subjects in `bonus-persona-rbac.yaml` are placeholder identities for local demonstration purposes (no real users or OIDC integration configured in this local environment), and in a production deployment, these subjects would map to real IdP-backed users or groups.
 2. **Pod Security Standards (Restricted)**: I labeled the `payments` namespace to enforce the built-in Kubernetes `restricted` security profile. I verified this works by deleting running pods and letting them recreate; they spun up successfully without any policy violation warnings.
 3. **Guardrail verification**: I created an insecure deployment config using the `:latest` tag and root execution, attempted to deploy it, and captured the Kyverno policy rejection messages.
 

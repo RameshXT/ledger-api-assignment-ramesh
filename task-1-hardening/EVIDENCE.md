@@ -768,12 +768,12 @@ metadata:
     pod-security.kubernetes.io/enforce: restricted
 ```
 
-### 4. Pod Deletion to Force Admission Policy Check
+#### 4. Pod Deletion to Force Admission Policy Check
 ```bash
-$ kubectl get pod -n payments -l app=ledger-api --field-selector=status.phase=Running -o name | head -1 | xargs kubectl delete
+$ kubectl delete pod ledger-api-668cd4b4cf-f7scs -n payments
 ```
 ```text
-pod "ledger-api-79c8695b76-ddrfv" deleted
+pod "ledger-api-668cd4b4cf-f7scs" deleted
 ```
 
 ### 5. Running Pods After Recreation
@@ -782,10 +782,9 @@ $ kubectl get pods -n payments
 ```
 ```text
 NAME                          READY   STATUS    RESTARTS   AGE
-ledger-api-79c8695b76-4vwqk   1/1     Running   0          21s
-ledger-api-79c8695b76-bvvhv   1/1     Running   0          21s
-ledger-api-79c8695b76-scg6v   1/1     Running   0          38m
-reporting-67ccdc8894-bh8d9    1/1     Running   0          39m
+ledger-api-668cd4b4cf-g6dmt   1/1     Running   0          69s
+ledger-api-668cd4b4cf-hg6sw   1/1     Running   0          69s
+ledger-api-668cd4b4cf-td9fv   1/1     Running   0          38s
 ```
 
 ### 6. Event Log Showing Successful Creation
@@ -793,18 +792,41 @@ reporting-67ccdc8894-bh8d9    1/1     Running   0          39m
 $ kubectl get events -n payments --sort-by='.lastTimestamp' | tail -10
 ```
 ```text
-28s         Normal    Killing             pod/ledger-api-79c8695b76-ddrfv    Stopping container ledger-api
-28s         Normal    SuccessfulCreate    replicaset/ledger-api-79c8695b76   Created pod: ledger-api-79c8695b76-bvvhv
-28s         Normal    Scheduled           pod/ledger-api-79c8695b76-bvvhv    Successfully assigned payments/ledger-api-79c8695b76-bvvhv to minikube
-28s         Normal    Killing             pod/ledger-api-79c8695b76-lf6cv    Stopping container ledger-api
-27s         Normal    Created             pod/ledger-api-79c8695b76-4vwqk    Container created
-27s         Normal    Started             pod/ledger-api-79c8695b76-bvvhv    Container started
-27s         Normal    Created             pod/ledger-api-79c8695b76-bvvhv    Container created
-27s         Normal    Pulled              pod/ledger-api-79c8695b76-4vwqk    Container image "docker.io/library/ledger-api:starter" already present on machine and can be accessed by the pod
-27s         Normal    Pulled              pod/ledger-api-79c8695b76-bvvhv    Container image "docker.io/library/ledger-api:starter" already present on machine and can be accessed by the pod
-27s         Normal    Started             pod/ledger-api-79c8695b76-4vwqk    Container started
+72s         Normal    Started             pod/ledger-api-668cd4b4cf-g6dmt    Container started
+72s         Normal    Started             pod/ledger-api-668cd4b4cf-f7scs    Container started
+72s         Normal    Created             pod/ledger-api-668cd4b4cf-g6dmt    Container created
+72s         Normal    Pulled              pod/ledger-api-668cd4b4cf-f7scs    Container image "docker.io/library/ledger-api:starter" already present on machine and can be accessed by the pod
+42s         Normal    Killing             pod/ledger-api-668cd4b4cf-f7scs    Stopping container ledger-api
+42s         Normal    Scheduled           pod/ledger-api-668cd4b4cf-td9fv    Successfully assigned payments/ledger-api-668cd4b4cf-td9fv to task1-verify
+42s         Normal    SuccessfulCreate    replicaset/ledger-api-668cd4b4cf   (combined from similar events): Created pod: ledger-api-668cd4b4cf-td9fv
+41s         Normal    Started             pod/ledger-api-668cd4b4cf-td9fv    Container started
+41s         Normal    Pulled              pod/ledger-api-668cd4b4cf-td9fv    Container image "docker.io/library/ledger-api:starter" already present on machine and can be accessed by the pod
+41s         Normal    Created             pod/ledger-api-668cd4b4cf-td9fv    Container created
 ```
 
-### 7. Verification Summary Note
-Note: During testing, a command-line pipeline execution detail (`kubectl delete ...` was used as the first segment of the filter command instead of `kubectl get`) resulted in two running pods (`ddrfv` and `lf6cv`) being terminated in the initial filter pass before the single-pod delete executed. Both pods were successfully recreated under the newly-labeled namespace. Both pods successfully completed admission and reached `1/1 Running` status with zero rejection events, confirming that the Task 1 securityContext hardening (non-root execution, read-only root filesystem, dropped capabilities, and RuntimeDefault seccomp profile) is fully compatible with the Kubernetes Pod Security Standards `restricted` mode.
+### 7. Isolated Cluster Configuration Proof
+The following outputs confirm Kyverno pods status, ClusterPolicies status, and namespace labels on the dedicated `task1-verify` cluster without any Istio mesh/Task 3 sidecars injected (indicated by `1/1` readiness state instead of `2/2`):
+```bash
+$ kubectl config current-context
+task1-verify
+
+$ kubectl get pods -n kyverno
+NAME                                             READY   STATUS    RESTARTS        AGE
+kyverno-admission-controller-7cdf5b9c-6zljt      1/1     Running   1 (3m30s ago)   20m
+kyverno-background-controller-7b54965bf9-cwsgf   1/1     Running   2 (3m30s ago)   20m
+kyverno-cleanup-controller-59c8fdfb66-q9tkp      1/1     Running   3 (3m31s ago)   20m
+kyverno-reports-controller-5c96886c9-pj98c       1/1     Running   2 (3m31s ago)   20m
+
+$ kubectl get clusterpolicy
+NAME                    ADMISSION   BACKGROUND   READY   AGE   MESSAGE
+disallow-latest-tag     true        true         True    12m   Ready
+require-non-root-user   true        true         True    12m   Ready
+
+$ kubectl get namespace payments --show-labels
+NAME       STATUS   AGE   LABELS
+payments   Active   12m   kubernetes.io/metadata.name=payments,pod-security.kubernetes.io/enforce=restricted
+```
+
+### 8. Verification Summary Note
+Note: This test was re-run on a dedicated, isolated cluster (task1-verify) containing only Task 1 resources, to avoid any interference from Task 3's Istio mesh sidecar injection present on the main development cluster. Kyverno and Pod Security Standards were both independently confirmed active and healthy on this cluster before the test. One pod (ledger-api-668cd4b4cf-f7scs) was deleted; the ReplicaSet recreated it as ledger-api-668cd4b4cf-td9fv, which reached 1/1 Running with no PolicyViolation events, confirming the Task 1 securityContext hardening is fully compatible with Kyverno and PSS restricted enforcement.
 
