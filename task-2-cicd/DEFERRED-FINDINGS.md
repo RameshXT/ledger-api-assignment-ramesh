@@ -2,7 +2,7 @@
 
 Previously, Semgrep identified 4 real, high-severity security findings in the active codebase. To preserve these vulnerabilities for Task 4's penetration testing while keeping the primary workload hardened, we have separated the codebases:
 
-1. **Hardened App (`task-1-hardening/app/`)**: Fully resolved. All vulnerabilities have been patched (RCE fixed via `yaml.safe_load`, SSRF fixed via URL validation, and non-root USER configured in the Dockerfile). All `# nosemgrep` comments have been removed.
+1. **Hardened App (`task-1-hardening/app/`)**: Fully resolved. All vulnerabilities have been patched (RCE fixed via `yaml.safe_load`, SSRF fixed via URL validation, and non root USER configured in the Dockerfile). All `# nosemgrep` comments have been removed.
 2. **Pentest Target (`task-4-recon-pentest/vulnerable-app/`)**: The original vulnerable files are maintained here as the dedicated pentesting targets with the RCE, SSRF, and root-container vulnerabilities intact.
 
 ---

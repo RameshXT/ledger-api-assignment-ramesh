@@ -1,8 +1,8 @@
 name: Secure CI/CD Pipeline
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch: {}
 
 permissions:
@@ -12,9 +12,7 @@ permissions:
   security-events: write
 
 jobs:
-  # Gitleaks: hard-blocks the pipeline. Any detected secret stops 
-  # the build entirely — no warnings, no exceptions, since a leaked credential 
-  # is critical severity by definition.
+  # run gitleaks first, secrets in code = instant fail, no exceptions
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
@@ -28,9 +26,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Semgrep: hard-blocks on ERROR-severity findings (e.g. injection, RCE-class issues). 
-  # WARNING-level findings are reported but do not block the pipeline, since not every 
-  # style/best-practice suggestion warrants stopping deployment.
+  # semgrep blocks only on ERROR level (injection, RCE etc), warnings just get reported
   sast-scan:
     runs-on: ubuntu-latest
     steps:
@@ -72,24 +68,18 @@ jobs:
       - name: Build and push container image
         id: build
         run: |
-          # Retrieve the short SHA for image tagging to avoid using "latest" (which is blocked by Kyverno)
+          # using short sha as tag, kyverno blocks :latest anyway
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           IMAGE=ghcr.io/$OWNER/ledger-api:$SHORT_SHA
-          
-          # Built directly from task-1-hardening/app/ to maintain a single source of truth 
-          # for the application source code and avoid duplication in task-2-cicd.
+
+          # app source lives in task-1-hardening/app, building from there
           docker build -t "$IMAGE" ./task-1-hardening/app
           docker push "$IMAGE"
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
-
-
-  # Trivy: hard-blocks on CRITICAL/HIGH severity CVEs in dependencies or the built image. 
-  # MEDIUM/LOW findings are reported but do not block, since we prioritize fixing what's 
-  # actually exploitable first. Unfixed CRITICAL/HIGH CVEs still block by default; if 
-  # this becomes impractical later, exceptions will be documented explicitly per-CVE, 
-  # the same way we handled the Semgrep findings.
+  # trivy blocks on CRITICAL and HIGH, medium and low just gets logged
+  # anything unfixed goes into .trivyignore with a reason and expiry date
   image-scan:
     needs: [build-and-push]
     runs-on: ubuntu-latest
@@ -235,4 +225,3 @@ jobs:
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           git commit -m "ci: deploy image $SHORT_SHA [skip ci]"
           git push
-

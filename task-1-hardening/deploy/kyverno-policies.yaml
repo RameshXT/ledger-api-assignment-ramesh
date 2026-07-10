@@ -55,5 +55,3 @@ spec:
           spec:
             containers:
               - image: "!*:latest"
-# TODO: Add verify-image-signature ClusterPolicy once Task 2's signing pipeline is implemented.
-

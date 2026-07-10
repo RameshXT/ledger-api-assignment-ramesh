@@ -1,12 +1,12 @@
 # Trivy Vulnerability Scan Findings & Analysis
 
-During our supply chain security hardening, Trivy's image-scan gate flagged multiple HIGH/CRITICAL CVEs in our base container image (built on Debian 13.5). This document details these findings, explains our mitigation strategy, and states our security policy decisions.
+During our supply chain security hardening, Trivy's image scan gate flagged multiple HIGH/CRITICAL CVEs in our base container image (built on Debian 13.5). This document details these findings, explains our mitigation strategy, and states our security policy decisions.
 
 ---
 
-## 1. Patched Vulnerabilities (App-Level & Bundled Tools)
+## 1. Patched Vulnerabilities (App Level & Bundled Tools)
 
-Through targeted upgrades, we successfully resolved all application-level and Python environment vulnerabilities:
+Through targeted upgrades, we successfully resolved all application level and Python environment vulnerabilities:
 * **Python Dependencies**: Upgraded `requests` from `2.20.0` to `2.32.3`. This pulled in a modern `urllib3` version, successfully patching 5 high-severity `urllib3` CVEs.
 * **Bundled Build Tools**: Added a step in our Dockerfile to upgrade `pip`, `setuptools`, and `wheel` before installing requirements. This patched the vulnerabilities originating from the base image's pre-installed Python packaging tools.
 

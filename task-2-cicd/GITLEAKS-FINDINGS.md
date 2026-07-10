@@ -1,6 +1,6 @@
 # Gitleaks Secrets Scanning Investigation
 
-While testing our new Gitleaks secrets-scanning gate, the GitHub Actions run passed with no leaks detected, but a full local scan found multiple findings. Here is the breakdown of why this happened, what was found, and our policy decision.
+While testing our new Gitleaks secrets scanning gate, the GitHub Actions run passed with no leaks detected, but a full local scan found multiple findings. Here is the breakdown of why this happened, what was found, and our policy decision.
 
 ---
 

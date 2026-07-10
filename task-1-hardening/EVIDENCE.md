@@ -601,14 +601,14 @@ require-non-root-user:
     failed at path /spec/template/spec/containers/0/securityContext/'
 ```
 
-Note: This output demonstrates defense-in-depth. The native Kubernetes Pod Security Standards (`restricted` enforcement) and the Kyverno policies act as two independent layers checking and blocking the insecure deployment.
+Note: This output demonstrates defence in depth. The native Kubernetes Pod Security Standards (`restricted` enforcement) and the Kyverno policies act as two independent layers checking and blocking the insecure deployment.
 
 ---
 
 ## Bonus Section A: Persona-Based RBAC (Developer / Operator / Admin)
 
-The persona-based RBAC model provides least-privilege access for three realistic personas scoped strictly to the `payments` namespace:
-- **developer**: read-only access to Pods, logs, Services, ConfigMaps, and Deployments (get, list, watch verbs only).
+The persona-based RBAC model provides least privilege access for three realistic personas scoped strictly to the `payments` namespace:
+- **developer**: read only access to Pods, logs, Services, ConfigMaps, and Deployments (get, list, watch verbs only).
 - **operator**: developer permissions plus pod delete (for triggering restarts) and deployment update/patch (for scaling/restarts), with no access to Secrets or RBAC resources.
 - **admin**: full resource access (all verbs on all resources) scoped strictly within the namespace (`Role`, not `ClusterRole`).
 
@@ -736,7 +736,7 @@ operator-rolebinding     Role/operator-role     1s
 
 ## Bonus Section B: Pod Security Standards (Restricted) Enforcement
 
-Labeling a namespace alone does not retroactively re-evaluate already-running pods. To ensure Pod Security Standards validation is truly active and enforcing, an existing `ledger-api` pod was deleted to force the ReplicaSet controller to recreate it fresh, triggering a real admission webhook/policy check.
+Labeling a namespace alone does not retroactively re-evaluate already running pods. To ensure Pod Security Standards validation is truly active and enforcing, an existing `ledger-api` pod was deleted to force the ReplicaSet controller to recreate it fresh, triggering a real admission webhook/policy check.
 
 ### 1. Labeling the namespace
 ```bash
@@ -828,5 +828,5 @@ payments   Active   12m   kubernetes.io/metadata.name=payments,pod-security.kube
 ```
 
 ### 8. Verification Summary Note
-Note: This test was re-run on a dedicated, isolated cluster (task1-verify) containing only Task 1 resources, to avoid any interference from Task 3's Istio mesh sidecar injection present on the main development cluster. Kyverno and Pod Security Standards were both independently confirmed active and healthy on this cluster before the test. One pod (ledger-api-668cd4b4cf-f7scs) was deleted; the ReplicaSet recreated it as ledger-api-668cd4b4cf-td9fv, which reached 1/1 Running with no PolicyViolation events, confirming the Task 1 securityContext hardening is fully compatible with Kyverno and PSS restricted enforcement.
+Note: This test was rerun on a dedicated, isolated cluster (task1-verify) containing only Task 1 resources, to avoid any interference from Task 3's Istio mesh sidecar injection present on the main development cluster. Kyverno and Pod Security Standards were both independently confirmed active and healthy on this cluster before the test. One pod (ledger-api-668cd4b4cf-f7scs) was deleted; the ReplicaSet recreated it as ledger-api-668cd4b4cf-td9fv, which reached 1/1 Running with no PolicyViolation events, confirming the Task 1 securityContext hardening is fully compatible with Kyverno and PSS restricted enforcement.
 

@@ -1,4 +1,4 @@
-# Secure CI/CD Pipeline & Supply Chain Evidence - Task 2
+# Secure CI/CD Pipeline & Supply Chain Evidence: Task 2
 
 This document provides actual logs, outputs, and proof of verification demonstrating that the pipeline and supply-chain controls are active and functioning correctly.
 
@@ -127,7 +127,7 @@ The following checks were performed on each of these signatures:
 
 ---
 
-## 8. GitOps Drift Detection & Self-Heal (ledger-api)
+## 8. GitOps Drift Detection & Self Heal (ledger-api)
 
 To verify real-time drift detection and automated self-healing, we manually modified the live `ledger-api` deployment replica count directly on the cluster and observed ArgoCD's automated corrective actions:
 
@@ -144,7 +144,7 @@ NAME         SYNC STATUS   HEALTH STATUS   REVISION                             
 ledger-app   Synced        Healthy         3dfa903ab4f671ed160bb499c7d1181a9a543c37   default
 ```
 
-### 3. Automated Reversion (Self-Heal Active)
+### 3. Automated Reversion (Self Heal Active)
 Within seconds, the controller detected the drift and reconciled the replica count back down to 3:
 ```bash
 $ kubectl get application ledger-app -n argocd -o wide
@@ -156,7 +156,7 @@ NAME         READY   UP-TO-DATE   AVAILABLE   AGE
 ledger-api   3/3     3            3           7h24m
 ```
 
-### 4. ArgoCD Events Trail proving Self-Heal
+### 4. ArgoCD Events Trail proving Self Heal
 ```bash
 $ kubectl describe application ledger-app -n argocd | tail -10
   Type    Reason              Age    From                           Message

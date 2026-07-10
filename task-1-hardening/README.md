@@ -1,4 +1,4 @@
-# Workload Hardening - Task 1
+# Workload Hardening: Task 1
 
 This folder contains the Kubernetes deployment manifests for the `ledger-api` service, hardened to meet strict security standards. 
 
@@ -28,7 +28,7 @@ I added CPU and memory limits. Without limits, a rogue container can hog all the
 
 I also added HTTP liveness and readiness health checks pointing to `/health`. If the app crashes or hangs, Kubernetes will detect it via the liveness probe and restart the container automatically.
 
-### 3. ServiceAccount and Least-Privilege RBAC
+### 3. ServiceAccount and Least Privilege RBAC
 I stopped using the `default` service account. The main risk with the default service account is that it gets automatically mounted into every pod in the namespace. If anyone (like a future teammate) attaches an RBAC permission rule to the default service account later, even by accident, every pod sharing that default account instantly inherits those permissions. This makes it a shared and highly vulnerable attack surface.
 
 I created a dedicated `ledger-api` service account. I also attached a completely empty `Role` and `RoleBinding` to it since this specific web service does not need to talk to the Kubernetes API server at all. Specifically, `ledger-api-role` has `rules: []` intentionally, documenting that ledger-api's ServiceAccount requires zero Kubernetes API access to function, which represents the strictest form of least privilege rather than an incomplete implementation.
@@ -52,7 +52,7 @@ I did not activate the "reject unsigned images" Kyverno policy yet. Because we h
 ## Completed Bonuses
 
 I also implemented three bonus security controls:
-1. **Persona-based RBAC**: I created three separate Roles and RoleBindings in `deploy/bonus-persona-rbac.yaml` for a Developer (read-only), Operator (read-only plus deployment restarts/scaling), and Admin (full namespace control). They are ready to be bound to users. Note that the `developer-user`, `operator-user`, and `admin-user` subjects in `bonus-persona-rbac.yaml` are placeholder identities for local demonstration purposes (no real users or OIDC integration configured in this local environment), and in a production deployment, these subjects would map to real IdP-backed users or groups.
+1. **Persona-based RBAC**: I created three separate Roles and RoleBindings in `deploy/bonus-persona-rbac.yaml` for a Developer (read only), Operator (read only plus deployment restarts/scaling), and Admin (full namespace control). They are ready to be bound to users. Note that the `developer-user`, `operator-user`, and `admin-user` subjects in `bonus-persona-rbac.yaml` are placeholder identities for local demonstration purposes (no real users or OIDC integration configured in this local environment), and in a production deployment, these subjects would map to real IdP-backed users or groups.
 2. **Pod Security Standards (Restricted)**: I labeled the `payments` namespace to enforce the built-in Kubernetes `restricted` security profile. I verified this works by deleting running pods and letting them recreate; they spun up successfully without any policy violation warnings.
 3. **Guardrail verification**: I created an insecure deployment config using the `:latest` tag and root execution, attempted to deploy it, and captured the Kyverno policy rejection messages.
 

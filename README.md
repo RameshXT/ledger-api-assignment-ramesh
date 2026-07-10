@@ -1,150 +1,112 @@
 # Dodo Payments: DevSecOps Assessment Submission
 
 **Candidate:** Ramesh Kanna G
-**Role:** Security & DevOps Engineer  
-**Assessment:** Security & DevOps Engineer Technical Assessment
+**Role:** Security & DevOps Engineer
 
 ---
 
-## Quick Navigation
+## Tasks
 
-| Task | Description | Folder |
+| Task | Folder | Key Links |
 | :--- | :--- | :--- |
-| [Task 1: Workload Hardening](#task-1-deploy-and-harden-the-workload) | Kubernetes hardening, Sealed Secrets, Kyverno | [`task-1-hardening/`](./task-1-hardening/) |
-| [Task 2: Secure CI/CD](#task-2-secure-cicd-pipeline-and-supply-chain) | GitHub Actions pipeline, Cosign, ArgoCD GitOps | [`task-2-cicd/`](./task-2-cicd/) |
-| [Task 3: Service Mesh](#task-3-service-mesh-and-zero-trust-istio) | Istio mTLS, AuthorizationPolicy, NetworkPolicy | [`task-3-mesh/`](./task-3-mesh/) |
-| [Task 4: Recon & Pentest](#task-4-reconnaissance-and-penetration-testing) | OSINT recon of dodopayments.tech + pentest of local target | [`task-4-recon-pentest/`](./task-4-recon-pentest/) |
+| Task 1: Workload Hardening | [`task-1-hardening/`](./task-1-hardening/) | [README](./task-1-hardening/README.md) · [Evidence](./task-1-hardening/EVIDENCE.md) · [Manifests](./task-1-hardening/deploy/) |
+| Task 2: Secure CI/CD | [`task-2-cicd/`](./task-2-cicd/) | [README](./task-2-cicd/README.md) · [Evidence](./task-2-cicd/EVIDENCE.md) · [Pipeline](./.github/workflows/ci-cd.yml) |
+| Task 3: Service Mesh | [`task-3-mesh/`](./task-3-mesh/) | [README](./task-3-mesh/README.md) · [Evidence](./task-3-mesh/EVIDENCE.md) |
+| Task 4: Recon & Pentest | [`task-4-recon-pentest/`](./task-4-recon-pentest/) | [README](./task-4-recon-pentest/README.md) · [Pentest Report](./task-4-recon-pentest/PENTEST_REPORT.md) · [Attack Surface Report](./task-4-recon-pentest/recon/ATTACK_SURFACE_REPORT.md) |
 
 ---
 
-## Task 1: Deploy and Harden the Workload
+## Task 1: Workload Hardening
 
-Took the original insecure `ledger-api` deployment (root container, plaintext secrets in git, no guardrails) and hardened it to production grade.
+Non-root containers, read-only filesystem, all capabilities dropped, Sealed Secrets (plaintext keys removed from git), Kyverno policies blocking root and `:latest` images, dedicated least-privilege ServiceAccount.
 
-**What was done:**
-- Non-root user (`10001`), read-only root filesystem, all capabilities dropped, `seccomp: RuntimeDefault`
-- CPU/memory requests & limits + liveness/readiness probes on every container
-- Dedicated least-privilege `ServiceAccount` with explicitly empty RBAC (`rules: []`)
-- Secrets migrated out of git using **Sealed Secrets** (plaintext key gone from repo)
-- **Kyverno** admission policies that reject root containers, `:latest` tags, and unsigned images
-- **Bonus:** Persona-based RBAC (developer/operator/admin), Pod Security Standards `restricted` enforced at namespace, Kyverno rejection of the original insecure manifest demonstrated
+**Bonus:** Persona RBAC (developer/operator/admin), Pod Security Standards `restricted`, Kyverno rejection proof.
 
-### Evidence Links
-
-| Artifact | Description |
+| Artifact | |
 | :--- | :--- |
-| [README.md](./task-1-hardening/README.md) | Approach, design decisions, hardening rationale |
-| [EVIDENCE.md](./task-1-hardening/EVIDENCE.md) | All command outputs, `kubectl` logs, Kyverno rejection events, Sealed Secrets verification |
-| [Architecture Diagram](./task-1-hardening/task1-architecture-diagram.png) | Deployment topology and security layers |
-| [deploy/](./task-1-hardening/deploy/) | All Kubernetes manifests (deployment, RBAC, Kyverno policies, Sealed Secrets) |
-| [insecure-test-DO-NOT-USE.yaml](./task-1-hardening/insecure-test-DO-NOT-USE.yaml) | The rejected insecure manifest used to verify Kyverno guardrails |
+| [README.md](./task-1-hardening/README.md) | Approach and design decisions |
+| [EVIDENCE.md](./task-1-hardening/EVIDENCE.md) | kubectl logs, Kyverno rejection events, Sealed Secrets proof |
+| [Architecture Diagram](./task-1-hardening/task1-architecture-diagram.png) | Deployment topology |
+| [deploy/](./task-1-hardening/deploy/) | All Kubernetes manifests |
+| [insecure-test-DO-NOT-USE.yaml](./task-1-hardening/insecure-test-DO-NOT-USE.yaml) | Insecure manifest used to verify Kyverno blocks |
 
 ---
 
 ## Task 2: Secure CI/CD Pipeline and Supply Chain
 
-Rebuilt the delivery path so security is enforced by the pipeline, not by good intentions.
+GitHub Actions pipeline (build, scan, sign, deploy), Gitleaks + Semgrep + Trivy hard-blocking gates, Cosign keyless signing with SLSA provenance, ArgoCD GitOps with drift detection.
 
-**What was done:**
-- GitHub Actions pipeline: build → scan → sign → deploy ([`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml))
-- **Hard-blocking gates:** Gitleaks (secrets scan), Semgrep SAST (ERROR severity), Trivy (CRITICAL/HIGH CVEs)
-- **Cosign keyless signing** (OIDC) + SLSA provenance attestation pushed to GHCR
-- **ArgoCD GitOps** with `selfHeal: true` for drift detection and auto-remediation
-- Deferred/unfixable CVEs explicitly tracked with justification and 30-day expiry
+**Bonus:** Full CVE triage with justifications and 30-day expiry in `.trivyignore`.
 
-### Evidence Links
-
-| Artifact | Description |
+| Artifact | |
 | :--- | :--- |
-| [README.md](./task-2-cicd/README.md) | Pipeline architecture, fail policies, design decisions |
-| [EVIDENCE.md](./task-2-cicd/EVIDENCE.md) | Pipeline run logs, Cosign verify output, ArgoCD drift detection proof |
-| [Architecture Diagram](./task-2-cicd/task2-architecture-diagram.png) | CI/CD pipeline and supply chain flow |
-| [TRIVY-FINDINGS.md](./task-2-cicd/TRIVY-FINDINGS.md) | Documented CVE triage with fix status, justification, expiry |
-| [GITLEAKS-FINDINGS.md](./task-2-cicd/GITLEAKS-FINDINGS.md) | Secrets scan results and `.gitleaksignore` rationale |
-| [DEFERRED-FINDINGS.md](./task-2-cicd/DEFERRED-FINDINGS.md) | Semgrep findings intentionally deferred to Task 4 pentest |
+| [README.md](./task-2-cicd/README.md) | Pipeline architecture and fail policies |
+| [EVIDENCE.md](./task-2-cicd/EVIDENCE.md) | Pipeline logs, Cosign verify, ArgoCD drift proof |
+| [Architecture Diagram](./task-2-cicd/task2-architecture-diagram.png) | CI/CD supply chain flow |
+| [TRIVY-FINDINGS.md](./task-2-cicd/TRIVY-FINDINGS.md) | CVE triage and fix status |
+| [GITLEAKS-FINDINGS.md](./task-2-cicd/GITLEAKS-FINDINGS.md) | Secrets scan results and rationale |
+| [DEFERRED-FINDINGS.md](./task-2-cicd/DEFERRED-FINDINGS.md) | Semgrep findings deferred to Task 4 |
+| [ci-cd.yml](./.github/workflows/ci-cd.yml) | Full GitHub Actions pipeline |
 | [argocd-app.yaml](./task-2-cicd/argocd-app.yaml) | ArgoCD Application manifest |
-| [ci-cd.yml](./.github/workflows/ci-cd.yml) | Full GitHub Actions pipeline definition |
 
 ---
 
-## Task 3: Service Mesh and Zero-Trust (Istio)
+## Task 3: Service Mesh and Zero Trust
 
-Built a full service mesh and enforced identity-based zero-trust communication between services.
+Istio with CNI (compatible with restricted PSS), mTLS STRICT across the namespace, default-deny AuthorizationPolicy with explicit allow by SPIFFE identity, Kubernetes NetworkPolicy layered underneath for defence in depth.
 
-**What was done:**
-- Istio installed with CNI plugin to stay compatible with Task 1's `restricted` Pod Security Standards
-- **mTLS STRICT** (`PeerAuthentication`) with plaintext request refused, verified with `istioctl authn tls-check`
-- **Default-deny `AuthorizationPolicy`** + explicit allow keyed on SPIFFE workload identity (not IP): unauthorized pod blocked (403), authorized `reporting` service allowed
-- Certificate issuance/rotation explained: 24h TTL, 12h SDS rotation trigger, self-signed cluster root CA
-- **Kubernetes `NetworkPolicy`** layered underneath for defence in depth with an explanation of what each layer catches that the other does not
-- **Bonus:** Istio Ingress Gateway with TLS termination, canary release via `VirtualService` + `DestinationRule`, PCI CDE scope mapping
+**Bonus:** Ingress Gateway with TLS, canary release (90/10 VirtualService), PCI DSS CDE scope mapping.
 
-### Evidence Links
-
-| Artifact | Description |
+| Artifact | |
 | :--- | :--- |
-| [README.md](./task-3-mesh/README.md) | Mesh architecture, mTLS rationale, cert rotation, NetworkPolicy vs AuthorizationPolicy comparison |
-| [EVIDENCE.md](./task-3-mesh/EVIDENCE.md) | `istioctl authn tls-check` output, 403 block proof, cert inspection, ArgoCD drift detection |
+| [README.md](./task-3-mesh/README.md) | Mesh design, cert rotation, NetworkPolicy vs AuthorizationPolicy |
+| [EVIDENCE.md](./task-3-mesh/EVIDENCE.md) | 403 block proof, cert inspection, ArgoCD drift detection |
 | [Architecture Diagram](./task-3-mesh/task3-architecture-diagram.png) | Zero-trust mesh topology |
-| [peer-authentication.yaml](./task-3-mesh/peer-authentication.yaml) | mTLS STRICT PeerAuthentication |
+| [peer-authentication.yaml](./task-3-mesh/peer-authentication.yaml) | mTLS STRICT policy |
 | [auth-deny-all.yaml](./task-3-mesh/auth-deny-all.yaml) | Default-deny AuthorizationPolicy |
-| [auth-allow-reporting.yaml](./task-3-mesh/auth-allow-reporting.yaml) | Explicit allow for `reporting` service by SPIFFE identity |
-| [net-deny-all.yaml](./task-3-mesh/net-deny-all.yaml) | Kubernetes NetworkPolicy default-deny |
+| [auth-allow-reporting.yaml](./task-3-mesh/auth-allow-reporting.yaml) | Explicit allow by SPIFFE identity |
+| [net-deny-all.yaml](./task-3-mesh/net-deny-all.yaml) | L3/L4 default-deny NetworkPolicy |
 | [gateway.yaml](./task-3-mesh/gateway.yaml) | Istio Ingress Gateway with TLS |
-| [argocd-app-mesh.yaml](./task-3-mesh/argocd-app-mesh.yaml) | Dedicated ArgoCD Application for mesh policies |
+| [argocd-app-mesh.yaml](./task-3-mesh/argocd-app-mesh.yaml) | ArgoCD Application for mesh policies |
 
 ---
 
 ## Task 4: Reconnaissance and Penetration Testing
 
-Switched sides: mapped the attack surface of `dodopayments.tech` as an outside attacker (passive only), then performed an authorized penetration test against the local `ledger-api` container.
+**Part A:** Passive OSINT of `dodopayments.tech`: 110 subdomains discovered, 56 live endpoints, TLS posture grade B (TLS 1.0/1.1 flagged, SWEET32/BEAST identified). No active attacks performed.
 
-### Part A: Passive Reconnaissance (dodopayments.tech)
+**Part B:** Authorized pentest of local `ledger-api` container: 4 findings (SSRF, Reversible Tokenization, Missing Auth, Insecure Deserialization). Full CVSS v3.1 vectors, PoC, attack chain, defensive mapping, and retest included.
 
-**What was done:**
-- Subdomain enumeration using `crt.sh` CT logs, `subfinder`, `amass (passive)`, `assetfinder` resulting in **110 subdomains discovered**
-- Live host fingerprinting with `httpx` identifying **56 live endpoints**
-- Technology stack fingerprinting with `whatweb`
-- TLS/SSL posture reviewed with `testssl.sh`: overall grade **B**, TLS 1.0/1.1 flagged, SWEET32/BEAST identified
-- Passive-only constraint strictly observed with no active scanners or exploits against any `dodopayments.tech` host
-
-### Part B: Penetration Test (Local ledger-api Container)
-
-**What was done:**
-- **4 findings** across OWASP Top 10 categories: SSRF, Reversible Tokenization, Missing Authentication, Insecure Deserialization (non-exploitable)
-- All findings include: CVSS v3.1 vector + score, affected endpoint, PoC request/response, impact, remediation
-- **Bonus: Attack chain** — SSRF + Missing Auth chained into a cardholder PAN exfiltration path
-- **Bonus: Retest section** — Finding 2 (tokenization) fixed and verified closed (brute-force returns `None` after patch)
-- **Bonus: Defensive mapping** — each finding mapped back to Task 1 to 3 controls that would (or would not) have stopped it
-
-### Evidence Links
-
-| Artifact | Description |
+| Artifact | |
 | :--- | :--- |
-| [README.md](./task-4-recon-pentest/README.md) | Methodology summary and deliverable index |
-| [PENTEST_REPORT.md](./task-4-recon-pentest/PENTEST_REPORT.md) | Full penetration test report: executive summary, findings, attack chain, defensive mapping, retest |
-| [ATTACK_SURFACE_REPORT.md](./task-4-recon-pentest/recon/ATTACK_SURFACE_REPORT.md) | Full recon report: 110 subdomain inventory, risk segmentation, TLS posture |
-| [EVIDENCE.md](./task-4-recon-pentest/recon/EVIDENCE.md) | Raw command outputs, `dig` results, HTTP request/response logs, brute-force output, remediation diff |
-| [recon/](./task-4-recon-pentest/recon/) | Raw tool output files (`subfinder.txt`, `amass.txt`, `assetfinder.txt`, `crtsh.txt`, `httpx_results.txt`, `whatweb_results.txt`, `testssl_*.txt`, `merged_subdomains.txt`) |
-| [vulnerable-app/](./task-4-recon-pentest/vulnerable-app/) | The local Flask target used for authorized active testing |
+| [README.md](./task-4-recon-pentest/README.md) | Methodology and deliverable index |
+| [PENTEST_REPORT.md](./task-4-recon-pentest/PENTEST_REPORT.md) | Full pentest report |
+| [ATTACK_SURFACE_REPORT.md](./task-4-recon-pentest/recon/ATTACK_SURFACE_REPORT.md) | Full recon report |
+| [EVIDENCE.md](./task-4-recon-pentest/recon/EVIDENCE.md) | Raw command outputs and logs |
+| [recon/](./task-4-recon-pentest/recon/) | Raw tool output files |
+| [vulnerable-app/](./task-4-recon-pentest/vulnerable-app/) | Local Flask target used for testing |
 
 ---
 
-## Repository Structure
+## Tools and Versions
 
-```
-.
-├── .github/
-│   └── workflows/
-│       └── ci-cd.yml               # GitHub Actions pipeline (Task 2)
-├── task-1-hardening/               # Workload hardening manifests + evidence
-├── task-2-cicd/                    # CI/CD pipeline configs + evidence
-├── task-3-mesh/                    # Istio mesh + NetworkPolicy manifests + evidence
-├── task-4-recon-pentest/           # Recon data, pentest report, vulnerable app
-├── .gitleaksignore                 # Gitleaks suppression rules
-└── .trivyignore                    # Trivy CVE suppression with justifications
-```
-
----
-
-*All testing was performed locally using free tooling. Kind cluster, GitHub Actions free runners, GHCR. No cloud account required.*
+| Tool | Version |
+| :--- | :--- |
+| minikube | v1.38.1 |
+| Docker | 29.6.1 |
+| kubectl | v1.36.2 |
+| Helm | v3.21.2 |
+| Istio / istioctl | 1.30.2 |
+| Kyverno | v1.18.1 (chart 3.8.1) |
+| ArgoCD | stable manifest |
+| Sealed Secrets | latest controller manifest |
+| Trivy | 0.71.2 |
+| Gitleaks | 8.30.1 |
+| Semgrep | 1.168.0 |
+| Cosign | v3.1.1 |
+| Subfinder | v2.14.0 |
+| httpx | v1.9.0 |
+| Amass | v3.19.2 |
+| Assetfinder | v0.1.1 |
+| testssl.sh | v3.3dev |
+| WhatWeb | 0.5.5 |

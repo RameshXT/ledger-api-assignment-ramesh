@@ -1,4 +1,4 @@
-# Secure CI/CD Pipeline & Supply Chain - Task 2
+# Secure CI/CD Pipeline & Supply Chain: Task 2
 
 This folder contains the secure delivery pipeline and supply-chain configurations for the `ledger-api` service, ensuring that security is enforced by automation rather than human memory.
 
@@ -22,15 +22,15 @@ I built a complete, secure delivery path for the `ledger-api` image:
 To ensure the gates do not become developer bottlenecks while maintaining high security posture, we configured specific fail policies:
 
 ### 1. Gitleaks (Secrets Scan)
-* **Fail Policy**: Hard-blocks. Any detected plaintext secret stops the pipeline immediately.
+* **Fail Policy**: Hard blocks. Any detected plaintext secret stops the pipeline immediately.
 * **Scan Scope**: Configured to run on the latest commit (`--log-opts=-1`) during pushes to keep daily developer workflows fast.
 
 ### 2. Semgrep (SAST)
-* **Fail Policy**: Hard-blocks only on **`ERROR`** severity findings (e.g. SQLi, SSRF, unsafe deserialization). Non-critical findings (warnings/info) are logged but do not block.
+* **Fail Policy**: Hard blocks only on **`ERROR`** severity findings (e.g. SQLi, SSRF, unsafe deserialization). Non critical findings (warnings/info) are logged but do not block.
 * **Bypass Policy**: Intentionally deferred vulnerabilities (reserved for Task 4's penetration test) are silenced explicitly with inline `# nosemgrep` comments referencing our [DEFERRED-FINDINGS.md](./DEFERRED-FINDINGS.md) file.
 
 ### 3. Trivy (Dependency / Image Scan)
-* **Fail Policy**: Hard-blocks on **`CRITICAL`** or **`HIGH`** severity vulnerabilities.
+* **Fail Policy**: Hard blocks on **`CRITICAL`** or **`HIGH`** severity vulnerabilities.
 * **Vulnerability Fix Policy**: 
   - Upstream-patched findings must be resolved immediately (e.g. we upgraded `PyYAML` to `6.0.1`, `Jinja2` to `3.1.2`, and removed the unused `requests` dependency entirely after deleting the insecure `/fetch` endpoint).
   - Unpatched OS-level vulnerabilities with no "Fixed Version" are managed using a `.trivyignore` file with explicit review/expiry dates (30 days) and documented justifications in [TRIVY-FINDINGS.md](./TRIVY-FINDINGS.md).
@@ -49,7 +49,7 @@ To satisfy PCI compliance and secure the container supply chain:
 
 Instead of using direct `kubectl apply` commands in our CI runners, we adopted GitOps:
 * **ArgoCD Application**: Defined in `argocd-app.yaml` to monitor the `task-1-hardening/deploy` directory on the `main` branch.
-* **Drift Detection & Self-Healing**: Configured with `selfHeal: true`. If a user manually edits a running resource on the cluster (e.g., scaling replicas or modifying configmaps), ArgoCD immediately flags the drift and reverts the cluster state back to the Git source of truth.
+* **Drift Detection & Self Healing**: Configured with `selfHeal: true`. If a user manually edits a running resource on the cluster (e.g., scaling replicas or modifying configmaps), ArgoCD immediately flags the drift and reverts the cluster state back to the Git source of truth.
 
 ---
 

@@ -21,7 +21,6 @@ roleRef:
   kind: Role
   name: developer-role
 subjects:
-  # Placeholder subject for developer persona binding
   - kind: User
     name: developer-user
     apiGroup: rbac.authorization.k8s.io
@@ -52,7 +51,6 @@ roleRef:
   kind: Role
   name: operator-role
 subjects:
-  # Placeholder subject for operator persona binding
   - kind: User
     name: operator-user
     apiGroup: rbac.authorization.k8s.io
@@ -77,7 +75,6 @@ roleRef:
   kind: Role
   name: admin-role
 subjects:
-  # Placeholder subject for admin persona binding
   - kind: User
     name: admin-user
     apiGroup: rbac.authorization.k8s.io
