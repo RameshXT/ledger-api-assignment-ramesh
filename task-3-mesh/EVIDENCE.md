@@ -118,6 +118,8 @@ curl: (56) Recv failure: Connection reset by peer
 command terminated with exit code 56
 ```
 
+![Plaintext Request Refusal (Strict mTLS)](img/mtls_plaintext_block.png)
+
 ### Plaintext Success under Permissive Mode (Contrast Check)
 
 The PeerAuthentication policy mode was temporarily switched to permissive. The plaintext request succeeded.
@@ -213,6 +215,8 @@ $ kubectl exec tmp-unauth-mesh -n payments -c client -- curl -iv http://ledger-a
 RBAC: access denied
 ```
 
+![Unauthorized Request Rejection](img/auth_policy_denied.png)
+
 ### Authorized Request Success
 
 A request was sent from the authorized reporting pod. The request succeeded with an HTTP 200 OK status.
@@ -253,6 +257,8 @@ x-envoy-upstream-service-time: 13
 100    21  100    21    0     0    164      0 --:--:-- --:--:-- --:--:--   165
 * Connection #0 to host ledger-api.payments.svc.cluster.local left intact
 ```
+
+![Authorized Request Success](img/auth_policy_allowed.png)
 
 ### Sanity Check (Deleting the Allow Rule)
 
@@ -628,6 +634,8 @@ $ curl -iv https://ledger-api.local:31385/health --resolve ledger-api.local:3138
 < server: istio-envoy
 {"status":"ok"}
 ```
+
+![Authorized HTTPS Ingress Gateway Request](img/ingress_gateway_tls.png)
 
 ### Unauthorized Plain HTTP Request Proof (Negative Control)
 
