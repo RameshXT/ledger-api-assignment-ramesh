@@ -23,7 +23,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: ledger-api
-          image: ghcr.io/rameshxt/ledger-api:9fb1b57
+          image: ghcr.io/rameshxt/ledger-api:3c14ede
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
