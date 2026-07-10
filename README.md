@@ -1,6 +1,6 @@
-# Dodo Payments — DevSecOps Assessment Submission
+# Dodo Payments: DevSecOps Assessment Submission
 
-**Candidate:** Ramesh  
+**Candidate:** Ramesh Kanna G
 **Role:** Security & DevOps Engineer  
 **Assessment:** Security & DevOps Engineer Technical Assessment
 
@@ -10,23 +10,23 @@
 
 | Task | Description | Folder |
 | :--- | :--- | :--- |
-| [Task 1 — Workload Hardening](#task-1--deploy--harden-the-workload) | Kubernetes hardening, Sealed Secrets, Kyverno | [`task-1-hardening/`](./task-1-hardening/) |
-| [Task 2 — Secure CI/CD](#task-2--secure-cicd-pipeline--supply-chain) | GitHub Actions pipeline, Cosign, ArgoCD GitOps | [`task-2-cicd/`](./task-2-cicd/) |
-| [Task 3 — Service Mesh](#task-3--service-mesh--zero-trust-istio) | Istio mTLS, AuthorizationPolicy, NetworkPolicy | [`task-3-mesh/`](./task-3-mesh/) |
-| [Task 4 — Recon & Pentest](#task-4--reconnaissance--penetration-testing) | OSINT recon of dodopayments.tech + pentest of local target | [`task-4-recon-pentest/`](./task-4-recon-pentest/) |
+| [Task 1: Workload Hardening](#task-1-deploy-and-harden-the-workload) | Kubernetes hardening, Sealed Secrets, Kyverno | [`task-1-hardening/`](./task-1-hardening/) |
+| [Task 2: Secure CI/CD](#task-2-secure-cicd-pipeline-and-supply-chain) | GitHub Actions pipeline, Cosign, ArgoCD GitOps | [`task-2-cicd/`](./task-2-cicd/) |
+| [Task 3: Service Mesh](#task-3-service-mesh-and-zero-trust-istio) | Istio mTLS, AuthorizationPolicy, NetworkPolicy | [`task-3-mesh/`](./task-3-mesh/) |
+| [Task 4: Recon & Pentest](#task-4-reconnaissance-and-penetration-testing) | OSINT recon of dodopayments.tech + pentest of local target | [`task-4-recon-pentest/`](./task-4-recon-pentest/) |
 
 ---
 
-## Task 1 — Deploy & Harden the Workload
+## Task 1: Deploy and Harden the Workload
 
-Took the original insecure `ledger-api` deployment (root container, plaintext secrets in git, no guardrails) and hardened it to production-grade.
+Took the original insecure `ledger-api` deployment (root container, plaintext secrets in git, no guardrails) and hardened it to production grade.
 
 **What was done:**
 - Non-root user (`10001`), read-only root filesystem, all capabilities dropped, `seccomp: RuntimeDefault`
 - CPU/memory requests & limits + liveness/readiness probes on every container
 - Dedicated least-privilege `ServiceAccount` with explicitly empty RBAC (`rules: []`)
 - Secrets migrated out of git using **Sealed Secrets** (plaintext key gone from repo)
-- **Kyverno** admission policies — rejects root containers, `:latest` tags, and unsigned images
+- **Kyverno** admission policies that reject root containers, `:latest` tags, and unsigned images
 - **Bonus:** Persona-based RBAC (developer/operator/admin), Pod Security Standards `restricted` enforced at namespace, Kyverno rejection of the original insecure manifest demonstrated
 
 ### Evidence Links
@@ -41,15 +41,15 @@ Took the original insecure `ledger-api` deployment (root container, plaintext se
 
 ---
 
-## Task 2 — Secure CI/CD Pipeline & Supply Chain
+## Task 2: Secure CI/CD Pipeline and Supply Chain
 
 Rebuilt the delivery path so security is enforced by the pipeline, not by good intentions.
 
 **What was done:**
 - GitHub Actions pipeline: build → scan → sign → deploy ([`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml))
-- **Hard-blocking gates:** Gitleaks (secrets scan), Semgrep SAST (ERROR-severity), Trivy (CRITICAL/HIGH CVEs)
-- **Cosign keyless signing** (OIDC) + SLSA-style provenance attestation pushed to GHCR
-- **ArgoCD GitOps** with `selfHeal: true` — drift detection + auto-remediation demonstrated
+- **Hard-blocking gates:** Gitleaks (secrets scan), Semgrep SAST (ERROR severity), Trivy (CRITICAL/HIGH CVEs)
+- **Cosign keyless signing** (OIDC) + SLSA provenance attestation pushed to GHCR
+- **ArgoCD GitOps** with `selfHeal: true` for drift detection and auto-remediation
 - Deferred/unfixable CVEs explicitly tracked with justification and 30-day expiry
 
 ### Evidence Links
@@ -67,16 +67,16 @@ Rebuilt the delivery path so security is enforced by the pipeline, not by good i
 
 ---
 
-## Task 3 — Service Mesh & Zero-Trust (Istio)
+## Task 3: Service Mesh and Zero-Trust (Istio)
 
 Built a full service mesh and enforced identity-based zero-trust communication between services.
 
 **What was done:**
 - Istio installed with CNI plugin to stay compatible with Task 1's `restricted` Pod Security Standards
-- **mTLS STRICT** (`PeerAuthentication`) — plaintext request refused, verified with `istioctl authn tls-check`
-- **Default-deny `AuthorizationPolicy`** + explicit allow keyed on SPIFFE workload identity (not IP) — unauthorized pod blocked (403), authorized `reporting` service allowed
+- **mTLS STRICT** (`PeerAuthentication`) with plaintext request refused, verified with `istioctl authn tls-check`
+- **Default-deny `AuthorizationPolicy`** + explicit allow keyed on SPIFFE workload identity (not IP): unauthorized pod blocked (403), authorized `reporting` service allowed
 - Certificate issuance/rotation explained: 24h TTL, 12h SDS rotation trigger, self-signed cluster root CA
-- **Kubernetes `NetworkPolicy`** layered underneath for defence-in-depth — explained what each layer catches that the other doesn't
+- **Kubernetes `NetworkPolicy`** layered underneath for defence in depth with an explanation of what each layer catches that the other does not
 - **Bonus:** Istio Ingress Gateway with TLS termination, canary release via `VirtualService` + `DestinationRule`, PCI CDE scope mapping
 
 ### Evidence Links
@@ -95,35 +95,35 @@ Built a full service mesh and enforced identity-based zero-trust communication b
 
 ---
 
-## Task 4 — Reconnaissance & Penetration Testing
+## Task 4: Reconnaissance and Penetration Testing
 
 Switched sides: mapped the attack surface of `dodopayments.tech` as an outside attacker (passive only), then performed an authorized penetration test against the local `ledger-api` container.
 
-### Part A — Passive Reconnaissance (`dodopayments.tech`)
+### Part A: Passive Reconnaissance (dodopayments.tech)
 
 **What was done:**
-- Subdomain enumeration: `crt.sh` CT logs, `subfinder`, `amass (passive)`, `assetfinder` → **110 subdomains discovered**
-- Live host fingerprinting with `httpx` → **56 live endpoints** identified
+- Subdomain enumeration using `crt.sh` CT logs, `subfinder`, `amass (passive)`, `assetfinder` resulting in **110 subdomains discovered**
+- Live host fingerprinting with `httpx` identifying **56 live endpoints**
 - Technology stack fingerprinting with `whatweb`
-- TLS/SSL posture reviewed with `testssl.sh` — overall grade **B**, TLS 1.0/1.1 flagged, SWEET32/BEAST identified
-- Passive-only constraint strictly observed — no active scanners or exploits against any `dodopayments.tech` host
+- TLS/SSL posture reviewed with `testssl.sh`: overall grade **B**, TLS 1.0/1.1 flagged, SWEET32/BEAST identified
+- Passive-only constraint strictly observed with no active scanners or exploits against any `dodopayments.tech` host
 
-### Part B — Penetration Test (Local `ledger-api` Container)
+### Part B: Penetration Test (Local ledger-api Container)
 
 **What was done:**
 - **4 findings** across OWASP Top 10 categories: SSRF, Reversible Tokenization, Missing Authentication, Insecure Deserialization (non-exploitable)
 - All findings include: CVSS v3.1 vector + score, affected endpoint, PoC request/response, impact, remediation
 - **Bonus: Attack chain** — SSRF + Missing Auth chained into a cardholder PAN exfiltration path
 - **Bonus: Retest section** — Finding 2 (tokenization) fixed and verified closed (brute-force returns `None` after patch)
-- **Bonus: Defensive mapping** — each finding mapped back to Task 1–3 controls that would (or would not) have stopped it
+- **Bonus: Defensive mapping** — each finding mapped back to Task 1 to 3 controls that would (or would not) have stopped it
 
 ### Evidence Links
 
 | Artifact | Description |
 | :--- | :--- |
 | [README.md](./task-4-recon-pentest/README.md) | Methodology summary and deliverable index |
-| [PENTEST_REPORT.md](./task-4-recon-pentest/PENTEST_REPORT.md) | Full penetration test report — executive summary, findings, attack chain, defensive mapping, retest |
-| [ATTACK_SURFACE_REPORT.md](./task-4-recon-pentest/recon/ATTACK_SURFACE_REPORT.md) | Full recon report — 110 subdomain inventory, risk segmentation, TLS posture |
+| [PENTEST_REPORT.md](./task-4-recon-pentest/PENTEST_REPORT.md) | Full penetration test report: executive summary, findings, attack chain, defensive mapping, retest |
+| [ATTACK_SURFACE_REPORT.md](./task-4-recon-pentest/recon/ATTACK_SURFACE_REPORT.md) | Full recon report: 110 subdomain inventory, risk segmentation, TLS posture |
 | [EVIDENCE.md](./task-4-recon-pentest/recon/EVIDENCE.md) | Raw command outputs, `dig` results, HTTP request/response logs, brute-force output, remediation diff |
 | [recon/](./task-4-recon-pentest/recon/) | Raw tool output files (`subfinder.txt`, `amass.txt`, `assetfinder.txt`, `crtsh.txt`, `httpx_results.txt`, `whatweb_results.txt`, `testssl_*.txt`, `merged_subdomains.txt`) |
 | [vulnerable-app/](./task-4-recon-pentest/vulnerable-app/) | The local Flask target used for authorized active testing |
@@ -147,4 +147,4 @@ Switched sides: mapped the attack surface of `dodopayments.tech` as an outside a
 
 ---
 
-*All testing was performed locally using free tooling — kind cluster, GitHub Actions free runners, GHCR. No cloud account required.*
+*All testing was performed locally using free tooling. Kind cluster, GitHub Actions free runners, GHCR. No cloud account required.*
