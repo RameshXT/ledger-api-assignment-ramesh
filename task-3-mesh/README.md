@@ -26,7 +26,7 @@ We inspected the certificates issued to our pods. The issuer is the local cluste
 
 Workload certificates in this deployment follow Istio's default rotation behavior. By default, the workload certificates are valid for 24 hours (SECRET_TTL), and the local `istio-agent` running in the sidecar proxy initiates a Secret Discovery Service (SDS) key rotation request when the certificate reaches 50% of its lifetime (a 12-hour grace period/rotation trigger). In this setup, the environment variables modifying the default certificate lifetime (`SECRET_TTL`) or rotation grace periods were left at their default values, meaning certificate rotation occurs automatically every 12 hours without service disruption.
 
-## NetworkPolicy vs AuthorizationPolicy — Defense in Depth
+## NetworkPolicy vs AuthorizationPolicy Defense in Depth
 
 We enforce security at both L3/L4 and L7 using a layered approach:
 
