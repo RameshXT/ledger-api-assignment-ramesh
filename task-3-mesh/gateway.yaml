@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: ledger-api-gateway
+  namespace: payments
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: ledger-api-tls
+    hosts:
+    - "ledger-api.local"
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ledger-api-vs
+  namespace: payments
+spec:
+  hosts:
+  - "ledger-api.local"
+  gateways:
+  - ledger-api-gateway
+  http:
+  - route:
+    - destination:
+        host: ledger-api.payments.svc.cluster.local
+        port:
+          number: 8080
