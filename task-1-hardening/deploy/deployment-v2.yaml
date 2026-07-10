@@ -1,12 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ledger-api
+  name: ledger-api-v2
   namespace: payments
   labels:
     app: ledger-api
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: ledger-api
@@ -14,7 +14,7 @@ spec:
     metadata:
       labels:
         app: ledger-api
-        version: v1
+        version: v2
     spec:
       serviceAccountName: ledger-api
       securityContext:
@@ -36,10 +36,10 @@ spec:
             runAsGroup: 10001
           envFrom:
             - configMapRef:
-                name: ledger-api-config
+                 name: ledger-api-config
           env:
             - name: APP_VERSION
-              value: v1
+              value: v2
             - name: STRIPE_API_KEY
               valueFrom:
                 secretKeyRef:

@@ -18,7 +18,8 @@ LEDGER = [
 
 @app.route("/health")
 def health():
-    return jsonify(status="ok")
+    version = os.environ.get("APP_VERSION", "v1")
+    return jsonify(status="ok", version=version)
 
 
 @app.route("/tokenize", methods=["POST"])

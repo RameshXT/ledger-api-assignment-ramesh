@@ -12,6 +12,14 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - istio-system
+                - kyverno
+                - argocd
       validate:
         message: "Running as root is not allowed. Set runAsNonRoot to true."
         anyPattern:
@@ -37,6 +45,14 @@ spec:
           - resources:
               kinds:
                 - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - istio-system
+                - kyverno
+                - argocd
       validate:
         message: "An image tag is required and must not be 'latest'."
         pattern:
