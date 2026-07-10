@@ -18,8 +18,6 @@ spec:
               namespaces:
                 - kube-system
                 - istio-system
-                - kyverno
-                - argocd
       validate:
         message: "Running as root is not allowed. Set runAsNonRoot to true."
         anyPattern:
@@ -51,8 +49,6 @@ spec:
               namespaces:
                 - kube-system
                 - istio-system
-                - kyverno
-                - argocd
       validate:
         message: "An image tag is required and must not be 'latest'."
         pattern:
